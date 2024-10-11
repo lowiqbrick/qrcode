@@ -3,12 +3,21 @@ use std::fmt::{Display, Formatter, Result};
 
 // constants for ANSI colors
 // https://en.wikipedia.org/wiki/ANSI_escape_code
+// FG  BG
+// 30  40 black
+// 37  47 white
+// 97 107 bright white
 const COLORSTOP: &str = "\x1b[m";
 const BRIGHTMAGENTA: &str = "\x1b[30;105m";
 const BRIGHTWHITE: &str = "\x1b[30;107m";
 const WHITE: &str = "\x1b[30;47m";
-const BRIGHTBLACK: &str = "\x1b[30;100";
-const BLACK: &str = "\x1b[97;40m";
+const BRIGHTBLACK: &str = "\x1b[30;100m";
+const BLACK: &str = "\x1b[37;40m";
+const RED: &str = "\x1b[37;41m";
+const BRIGHTRED: &str = "\x1b[37;101m";
+const BRIGHTYELLOW: &str = "\x1b[30;103m";
+const BRIGHTBLUE: &str = "\x1b[30;104m";
+const BRIGHTCYAN: &str = "\x1b[30;106m";
 
 /// represents the qr code symbols statuses, which are uninitialised, true false
 pub enum SymbolStatus {
@@ -68,7 +77,7 @@ impl QRData {
             output_data.push(Vec::with_capacity(width_quite_zone));
             role_data.push(Vec::with_capacity(width_quite_zone));
             // initialise the vectors
-            for column in 0..width_quite_zone {
+            for _ in 0..width_quite_zone {
                 output_data[row].push(SymbolStatus::Uninitialised);
                 role_data[row].push(SymbolRole::Uninitialised);
             }
@@ -116,10 +125,19 @@ impl Display for QRData {
                 }
             }
             // don't forget the newlines
-            write!(f, "{}", "\n")?;
+            writeln!(f)?;
         }
         // if debugging print the role data as well
         if self.settings.debugging {
+            writeln!(f, "{}Uninitialised{}", BRIGHTMAGENTA, COLORSTOP)?;
+            writeln!(f, "{}QuietZone{}", BRIGHTWHITE, COLORSTOP)?;
+            writeln!(f, "{}FinderPattern{}", WHITE, COLORSTOP)?;
+            writeln!(f, "{}AlignmentPattern{}", BRIGHTBLACK, COLORSTOP)?;
+            writeln!(f, "{}TimingPattern{}", BRIGHTRED, COLORSTOP)?;
+            writeln!(f, "{}Separator{}", RED, COLORSTOP)?;
+            writeln!(f, "{}FormatInformation{}", BRIGHTYELLOW, COLORSTOP)?;
+            writeln!(f, "{}VersionInformation{}", BRIGHTCYAN, COLORSTOP)?;
+            writeln!(f, "{}EncodingRegion{}", BRIGHTBLUE, COLORSTOP)?;
             for row in 0..self.role_data.len() {
                 for column in 0..self.role_data[row].len() {
                     match self.role_data[row][column] {
@@ -132,7 +150,19 @@ impl Display for QRData {
                         SymbolRole::AlignmentPattern => {
                             write!(f, "{}{}{}", BRIGHTBLACK, " ", COLORSTOP)?
                         }
-                        _ => write!(f, "{}{}{}", BRIGHTMAGENTA, " ", COLORSTOP)?,
+                        SymbolRole::TimingPattern => {
+                            write!(f, "{}{}{}", BRIGHTRED, " ", COLORSTOP)?
+                        }
+                        SymbolRole::Separator => write!(f, "{}{}{}", RED, " ", COLORSTOP)?,
+                        SymbolRole::FormatInformation => {
+                            write!(f, "{}{}{}", BRIGHTYELLOW, " ", COLORSTOP)?
+                        }
+                        SymbolRole::VersionInformation => {
+                            write!(f, "{}{}{}", BRIGHTCYAN, " ", COLORSTOP)?
+                        }
+                        SymbolRole::EncodingRegion => {
+                            write!(f, "{}{}{}", BRIGHTBLUE, " ", COLORSTOP)?
+                        }
                     }
                 }
                 // don't forget the newlines

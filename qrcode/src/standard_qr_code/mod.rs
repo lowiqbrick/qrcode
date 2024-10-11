@@ -11,6 +11,6 @@ pub fn qr_code(input: Settings) {
     // struct for all data
     let qrdata: QRData = QRData::new(input);
     if qrdata.get_settings().debugging {
-        print!("{}", qrdata);
+        println!("{}", qrdata);
     }
 }

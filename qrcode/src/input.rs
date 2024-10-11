@@ -31,11 +31,11 @@ impl ToString for ErrorLevel {
 #[clap(about, long_about = None)]
 pub struct Settings {
     /// the text to be incoded into the qr code
-    information: String,
+    pub information: String,
     /// specifies the error correction level of the generated qr code
     #[clap(default_value_t = ErrorLevel::L)]
-    error_level: ErrorLevel,
+    pub error_level: ErrorLevel,
     /// Print debugging info to the terminal, while generating the code
     #[arg(short, long)]
-    debugging: bool,
+    pub debugging: bool,
 }

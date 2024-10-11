@@ -1,3 +1,5 @@
+/// this program is supposed to be handed a string which gets converted into
+/// a QR code following norm ISO/IEC CD 18004
 mod input;
 mod standard_qr_code;
 use clap::Parser;

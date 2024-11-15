@@ -1207,6 +1207,10 @@ fn sanitycheck_version_information() {
             let mut current_memory: u16 = 0;
             for block in memory_case.1 {
                 current_memory += block.num_block as u16 * block.total_block_len as u16;
+                assert_eq!(
+                    block.total_block_len,
+                    block.num_data_bytes + block.num_error_bytes
+                );
             }
             if current_memory != loop_version.1 {
                 println!(

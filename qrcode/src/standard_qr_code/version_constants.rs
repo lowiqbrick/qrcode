@@ -75,7 +75,7 @@ pub fn get_error_block_info() -> Vec<(u8, u16, Vec<(ErrorLevel, Vec<ErrorBlockIn
                 (ErrorLevel::L, vec![ErrorBlockInfo::new(2, 86, 68)]),
                 (ErrorLevel::M, vec![ErrorBlockInfo::new(4, 43, 27)]),
                 (ErrorLevel::Q, vec![ErrorBlockInfo::new(4, 43, 19)]),
-                (ErrorLevel::H, vec![ErrorBlockInfo::new(4, 243, 15)]),
+                (ErrorLevel::H, vec![ErrorBlockInfo::new(4, 43, 15)]),
             ],
         ),
         (
@@ -643,29 +643,29 @@ pub fn get_error_block_info() -> Vec<(u8, u16, Vec<(ErrorLevel, Vec<ErrorBlockIn
                 (
                     ErrorLevel::L,
                     vec![
-                        ErrorBlockInfo::new(6, 132, 106),
+                        ErrorBlockInfo::new(8, 132, 106),
                         ErrorBlockInfo::new(4, 133, 107),
                     ],
                 ),
                 (
                     ErrorLevel::M,
                     vec![
-                        ErrorBlockInfo::new(6, 75, 47),
-                        ErrorBlockInfo::new(14, 76, 48),
+                        ErrorBlockInfo::new(8, 75, 47),
+                        ErrorBlockInfo::new(13, 76, 48),
                     ],
                 ),
                 (
                     ErrorLevel::Q,
                     vec![
-                        ErrorBlockInfo::new(11, 54, 24),
-                        ErrorBlockInfo::new(16, 55, 25),
+                        ErrorBlockInfo::new(7, 54, 24),
+                        ErrorBlockInfo::new(22, 55, 25),
                     ],
                 ),
                 (
                     ErrorLevel::H,
                     vec![
-                        ErrorBlockInfo::new(30, 45, 15),
-                        ErrorBlockInfo::new(2, 46, 16),
+                        ErrorBlockInfo::new(22, 45, 15),
+                        ErrorBlockInfo::new(13, 46, 16),
                     ],
                 ),
             ],
@@ -1045,29 +1045,29 @@ pub fn get_error_block_info() -> Vec<(u8, u16, Vec<(ErrorLevel, Vec<ErrorBlockIn
                 (
                     ErrorLevel::L,
                     vec![
-                        ErrorBlockInfo::new(6, 152, 122),
-                        ErrorBlockInfo::new(14, 153, 123),
+                        ErrorBlockInfo::new(17, 152, 122),
+                        ErrorBlockInfo::new(4, 153, 123),
                     ],
                 ),
                 (
                     ErrorLevel::M,
                     vec![
-                        ErrorBlockInfo::new(6, 74, 46),
-                        ErrorBlockInfo::new(34, 75, 47),
+                        ErrorBlockInfo::new(29, 74, 46),
+                        ErrorBlockInfo::new(14, 75, 47),
                     ],
                 ),
                 (
                     ErrorLevel::Q,
                     vec![
-                        ErrorBlockInfo::new(46, 54, 24),
+                        ErrorBlockInfo::new(49, 54, 24),
                         ErrorBlockInfo::new(10, 55, 25),
                     ],
                 ),
                 (
                     ErrorLevel::H,
                     vec![
-                        ErrorBlockInfo::new(2, 45, 15),
-                        ErrorBlockInfo::new(64, 46, 16),
+                        ErrorBlockInfo::new(24, 45, 15),
+                        ErrorBlockInfo::new(46, 46, 16),
                     ],
                 ),
             ],
@@ -1183,7 +1183,7 @@ pub fn get_error_block_info() -> Vec<(u8, u16, Vec<(ErrorLevel, Vec<ErrorBlockIn
 fn sanitycheck_version_information() {
     let info: Vec<(u8, u16, Vec<(ErrorLevel, Vec<ErrorBlockInfo>)>)> = get_error_block_info();
     assert_eq!(info.len(), 40);
-    let mut version: i16 = -1;
+    let mut version: i16 = 0;
     let mut size: u16 = 0;
     for loop_version in info.clone() {
         // check that the numbers go up by one
@@ -1206,12 +1206,12 @@ fn sanitycheck_version_information() {
         for memory_case in loop_version.2.clone() {
             let mut current_memory: u16 = 0;
             for block in memory_case.1 {
-                current_memory += block.num_block as u16 * block.num_data_bytes as u16;
+                current_memory += block.num_block as u16 * block.total_block_len as u16;
             }
             if current_memory != loop_version.1 {
                 println!(
-                    "this verision has a size of {} bytes but the blocks take up {} bytes",
-                    loop_version.1, current_memory
+                    "version {} has a size of {} bytes but the {:?} block takes up {} bytes",
+                    version, loop_version.1, memory_case.0, current_memory
                 );
                 panic!();
             }

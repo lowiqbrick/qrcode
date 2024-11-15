@@ -65,11 +65,11 @@ pub struct ErrorBlockInfo {
     /// amount of this block in this version
     pub num_block: u8,
     /// total length of the block
-    total_block_len: u8,
+    pub total_block_len: u8,
     /// data length in this block
     pub num_data_bytes: u8,
     /// number of error correction bytes in this block
-    num_error_bytes: u8,
+    pub num_error_bytes: u8,
 }
 
 impl ErrorBlockInfo {

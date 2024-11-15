@@ -5,14 +5,10 @@ mod polynomials;
 mod standard_qr_code;
 use clap::Parser;
 use input::*;
-use polynomials::test;
 use standard_qr_code::qr_code;
 
 fn main() {
     // get environment variables
     let settings: Settings = Settings::parse();
     qr_code(settings.clone());
-    if settings.debugging {
-        test();
-    }
 }

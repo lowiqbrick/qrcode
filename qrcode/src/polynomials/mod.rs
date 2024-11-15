@@ -1,7 +1,8 @@
 use std::fmt::{Display, Formatter, Result};
 use std::ops::{Add, Mul, Sub};
 
-#[derive(Clone, Copy)]
+/// structure that represents an indetermiante as coefficient*x^degree
+#[derive(Clone, Copy, PartialEq, Debug)]
 struct Indeterminate {
     /// factor in front pof the indeterminate
     coefficient: i16,
@@ -37,7 +38,9 @@ impl Mul for Indeterminate {
     }
 }
 
-#[derive(Clone)]
+/// combines the indeterminates together into a polynomial for more
+/// advanced maths operations
+#[derive(Clone, PartialEq, Debug)]
 struct Polynomial {
     function: Vec<Indeterminate>,
 }
@@ -147,7 +150,8 @@ impl Sub for Polynomial {
     }
 }
 
-pub fn test() {
+#[test]
+pub fn polynomials_math() {
     // simple test polynomial
     let test_pol: Polynomial = Polynomial::new(vec![
         Indeterminate::new(1, 2),
@@ -162,19 +166,32 @@ pub fn test() {
         reduce_test1,
         reduce_test1.clone().reduce()
     );
+    assert_eq!(
+        reduce_test1.clone().reduce(),
+        Polynomial::new(vec![Indeterminate::new(2, 4)])
+    );
     let add1: Polynomial =
         Polynomial::new(vec![Indeterminate::new(4, 3), Indeterminate::new(2, 2)]);
     let add2: Polynomial = Polynomial::new(vec![Indeterminate::new(-2, 3)]);
     let result_add: Polynomial = add1.clone() + add2.clone();
     println!("{} plus {} equals {}", add1, add2, result_add);
+    assert_eq!(
+        result_add,
+        Polynomial::new(vec![Indeterminate::new(2, 3), Indeterminate::new(2, 2)])
+    );
     println!(
         "{} minus {} equals {}",
         add1,
         add2,
         add1.clone() - add2.clone()
     );
+    assert_eq!(
+        add1.clone() - add2.clone(),
+        Polynomial::new(vec![Indeterminate::new(6, 3), Indeterminate::new(2, 2)])
+    );
     let inde1: Indeterminate = Indeterminate::new(3, 2);
     let inde2: Indeterminate = Indeterminate::new(-1, 6);
     let result2: Indeterminate = inde1.clone() * inde2.clone();
     println!("{} multiplied with {} equals {} ", inde1, inde2, result2);
+    assert_eq!(result2, Indeterminate::new(-3, 12));
 }

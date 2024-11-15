@@ -21,7 +21,7 @@ pub fn get_verison_info(
     // look for the fitting version
     for version in all_info {
         // does this one potentally fit the text
-        if search_length >= version.1 {
+        if search_length <= version.1 {
             // does the error level fit the text
             for (error_enum, block_vector) in version.2 {
                 // does the level fit
@@ -46,6 +46,7 @@ pub fn get_verison_info(
 }
 
 /// takes a version number and returns the amount of bits in the character code indicator
+#[allow(dead_code)]
 pub fn num_bits_character_code_indicator(version: u8) -> u8 {
     match version {
         1..=9 => return 8,

@@ -518,6 +518,703 @@ pub fn get_error_block_info() -> Vec<(u8, u16, Vec<(ErrorLevel, Vec<ErrorBlockIn
                 ),
             ],
         ),
+        (
+            21,
+            1156,
+            vec![
+                (
+                    ErrorLevel::L,
+                    vec![
+                        ErrorBlockInfo::new(4, 144, 116),
+                        ErrorBlockInfo::new(4, 145, 117),
+                    ],
+                ),
+                (ErrorLevel::M, vec![ErrorBlockInfo::new(17, 68, 42)]),
+                (
+                    ErrorLevel::Q,
+                    vec![
+                        ErrorBlockInfo::new(17, 50, 22),
+                        ErrorBlockInfo::new(6, 51, 23),
+                    ],
+                ),
+                (
+                    ErrorLevel::H,
+                    vec![
+                        ErrorBlockInfo::new(19, 46, 16),
+                        ErrorBlockInfo::new(6, 47, 17),
+                    ],
+                ),
+            ],
+        ),
+        (
+            22,
+            1258,
+            vec![
+                (
+                    ErrorLevel::L,
+                    vec![
+                        ErrorBlockInfo::new(2, 139, 111),
+                        ErrorBlockInfo::new(7, 140, 112),
+                    ],
+                ),
+                (ErrorLevel::M, vec![ErrorBlockInfo::new(17, 74, 46)]),
+                (
+                    ErrorLevel::Q,
+                    vec![
+                        ErrorBlockInfo::new(7, 54, 24),
+                        ErrorBlockInfo::new(16, 55, 25),
+                    ],
+                ),
+                (ErrorLevel::H, vec![ErrorBlockInfo::new(34, 37, 13)]),
+            ],
+        ),
+        (
+            23,
+            1364,
+            vec![
+                (
+                    ErrorLevel::L,
+                    vec![
+                        ErrorBlockInfo::new(4, 151, 121),
+                        ErrorBlockInfo::new(5, 152, 122),
+                    ],
+                ),
+                (
+                    ErrorLevel::M,
+                    vec![
+                        ErrorBlockInfo::new(4, 75, 47),
+                        ErrorBlockInfo::new(14, 76, 48),
+                    ],
+                ),
+                (
+                    ErrorLevel::Q,
+                    vec![
+                        ErrorBlockInfo::new(11, 54, 24),
+                        ErrorBlockInfo::new(14, 55, 25),
+                    ],
+                ),
+                (
+                    ErrorLevel::H,
+                    vec![
+                        ErrorBlockInfo::new(16, 45, 15),
+                        ErrorBlockInfo::new(14, 46, 16),
+                    ],
+                ),
+            ],
+        ),
+        (
+            24,
+            1474,
+            vec![
+                (
+                    ErrorLevel::L,
+                    vec![
+                        ErrorBlockInfo::new(6, 147, 117),
+                        ErrorBlockInfo::new(4, 148, 118),
+                    ],
+                ),
+                (
+                    ErrorLevel::M,
+                    vec![
+                        ErrorBlockInfo::new(6, 73, 45),
+                        ErrorBlockInfo::new(14, 74, 46),
+                    ],
+                ),
+                (
+                    ErrorLevel::Q,
+                    vec![
+                        ErrorBlockInfo::new(11, 54, 24),
+                        ErrorBlockInfo::new(16, 55, 25),
+                    ],
+                ),
+                (
+                    ErrorLevel::H,
+                    vec![
+                        ErrorBlockInfo::new(30, 46, 16),
+                        ErrorBlockInfo::new(2, 47, 17),
+                    ],
+                ),
+            ],
+        ),
+        (
+            25,
+            1588,
+            vec![
+                (
+                    ErrorLevel::L,
+                    vec![
+                        ErrorBlockInfo::new(6, 132, 106),
+                        ErrorBlockInfo::new(4, 133, 107),
+                    ],
+                ),
+                (
+                    ErrorLevel::M,
+                    vec![
+                        ErrorBlockInfo::new(6, 75, 47),
+                        ErrorBlockInfo::new(14, 76, 48),
+                    ],
+                ),
+                (
+                    ErrorLevel::Q,
+                    vec![
+                        ErrorBlockInfo::new(11, 54, 24),
+                        ErrorBlockInfo::new(16, 55, 25),
+                    ],
+                ),
+                (
+                    ErrorLevel::H,
+                    vec![
+                        ErrorBlockInfo::new(30, 45, 15),
+                        ErrorBlockInfo::new(2, 46, 16),
+                    ],
+                ),
+            ],
+        ),
+        (
+            26,
+            1706,
+            vec![
+                (
+                    ErrorLevel::L,
+                    vec![
+                        ErrorBlockInfo::new(10, 142, 114),
+                        ErrorBlockInfo::new(2, 143, 115),
+                    ],
+                ),
+                (
+                    ErrorLevel::M,
+                    vec![
+                        ErrorBlockInfo::new(19, 74, 46),
+                        ErrorBlockInfo::new(4, 75, 47),
+                    ],
+                ),
+                (
+                    ErrorLevel::Q,
+                    vec![
+                        ErrorBlockInfo::new(28, 50, 22),
+                        ErrorBlockInfo::new(6, 51, 23),
+                    ],
+                ),
+                (
+                    ErrorLevel::H,
+                    vec![
+                        ErrorBlockInfo::new(33, 46, 16),
+                        ErrorBlockInfo::new(4, 47, 17),
+                    ],
+                ),
+            ],
+        ),
+        (
+            27,
+            1828,
+            vec![
+                (
+                    ErrorLevel::L,
+                    vec![
+                        ErrorBlockInfo::new(8, 152, 122),
+                        ErrorBlockInfo::new(4, 153, 123),
+                    ],
+                ),
+                (
+                    ErrorLevel::M,
+                    vec![
+                        ErrorBlockInfo::new(22, 73, 45),
+                        ErrorBlockInfo::new(3, 74, 46),
+                    ],
+                ),
+                (
+                    ErrorLevel::Q,
+                    vec![
+                        ErrorBlockInfo::new(8, 53, 23),
+                        ErrorBlockInfo::new(26, 54, 24),
+                    ],
+                ),
+                (
+                    ErrorLevel::H,
+                    vec![
+                        ErrorBlockInfo::new(12, 45, 15),
+                        ErrorBlockInfo::new(28, 46, 16),
+                    ],
+                ),
+            ],
+        ),
+        (
+            28,
+            1921,
+            vec![
+                (
+                    ErrorLevel::L,
+                    vec![
+                        ErrorBlockInfo::new(3, 147, 117),
+                        ErrorBlockInfo::new(10, 148, 118),
+                    ],
+                ),
+                (
+                    ErrorLevel::M,
+                    vec![
+                        ErrorBlockInfo::new(3, 73, 45),
+                        ErrorBlockInfo::new(23, 74, 46),
+                    ],
+                ),
+                (
+                    ErrorLevel::Q,
+                    vec![
+                        ErrorBlockInfo::new(4, 54, 24),
+                        ErrorBlockInfo::new(31, 55, 25),
+                    ],
+                ),
+                (
+                    ErrorLevel::H,
+                    vec![
+                        ErrorBlockInfo::new(11, 45, 15),
+                        ErrorBlockInfo::new(31, 46, 16),
+                    ],
+                ),
+            ],
+        ),
+        (
+            29,
+            2051,
+            vec![
+                (
+                    ErrorLevel::L,
+                    vec![
+                        ErrorBlockInfo::new(7, 146, 116),
+                        ErrorBlockInfo::new(7, 147, 117),
+                    ],
+                ),
+                (
+                    ErrorLevel::M,
+                    vec![
+                        ErrorBlockInfo::new(21, 73, 45),
+                        ErrorBlockInfo::new(7, 74, 46),
+                    ],
+                ),
+                (
+                    ErrorLevel::Q,
+                    vec![
+                        ErrorBlockInfo::new(1, 53, 23),
+                        ErrorBlockInfo::new(37, 54, 24),
+                    ],
+                ),
+                (
+                    ErrorLevel::H,
+                    vec![
+                        ErrorBlockInfo::new(19, 45, 15),
+                        ErrorBlockInfo::new(26, 46, 16),
+                    ],
+                ),
+            ],
+        ),
+        (
+            30,
+            2185,
+            vec![
+                (
+                    ErrorLevel::L,
+                    vec![
+                        ErrorBlockInfo::new(5, 145, 115),
+                        ErrorBlockInfo::new(10, 146, 116),
+                    ],
+                ),
+                (
+                    ErrorLevel::M,
+                    vec![
+                        ErrorBlockInfo::new(19, 75, 47),
+                        ErrorBlockInfo::new(10, 76, 48),
+                    ],
+                ),
+                (
+                    ErrorLevel::Q,
+                    vec![
+                        ErrorBlockInfo::new(15, 54, 24),
+                        ErrorBlockInfo::new(25, 55, 25),
+                    ],
+                ),
+                (
+                    ErrorLevel::H,
+                    vec![
+                        ErrorBlockInfo::new(23, 45, 15),
+                        ErrorBlockInfo::new(25, 46, 16),
+                    ],
+                ),
+            ],
+        ),
+        (
+            31,
+            2323,
+            vec![
+                (
+                    ErrorLevel::L,
+                    vec![
+                        ErrorBlockInfo::new(13, 145, 115),
+                        ErrorBlockInfo::new(3, 146, 116),
+                    ],
+                ),
+                (
+                    ErrorLevel::M,
+                    vec![
+                        ErrorBlockInfo::new(2, 74, 46),
+                        ErrorBlockInfo::new(29, 75, 47),
+                    ],
+                ),
+                (
+                    ErrorLevel::Q,
+                    vec![
+                        ErrorBlockInfo::new(42, 54, 24),
+                        ErrorBlockInfo::new(1, 55, 25),
+                    ],
+                ),
+                (
+                    ErrorLevel::H,
+                    vec![
+                        ErrorBlockInfo::new(23, 45, 15),
+                        ErrorBlockInfo::new(28, 46, 16),
+                    ],
+                ),
+            ],
+        ),
+        (
+            32,
+            2465,
+            vec![
+                (ErrorLevel::L, vec![ErrorBlockInfo::new(17, 145, 115)]),
+                (
+                    ErrorLevel::M,
+                    vec![
+                        ErrorBlockInfo::new(10, 74, 46),
+                        ErrorBlockInfo::new(23, 75, 47),
+                    ],
+                ),
+                (
+                    ErrorLevel::Q,
+                    vec![
+                        ErrorBlockInfo::new(10, 54, 24),
+                        ErrorBlockInfo::new(35, 55, 25),
+                    ],
+                ),
+                (
+                    ErrorLevel::H,
+                    vec![
+                        ErrorBlockInfo::new(19, 45, 15),
+                        ErrorBlockInfo::new(35, 46, 16),
+                    ],
+                ),
+            ],
+        ),
+        (
+            33,
+            2611,
+            vec![
+                (
+                    ErrorLevel::L,
+                    vec![
+                        ErrorBlockInfo::new(17, 145, 115),
+                        ErrorBlockInfo::new(1, 146, 116),
+                    ],
+                ),
+                (
+                    ErrorLevel::M,
+                    vec![
+                        ErrorBlockInfo::new(14, 74, 46),
+                        ErrorBlockInfo::new(21, 75, 47),
+                    ],
+                ),
+                (
+                    ErrorLevel::Q,
+                    vec![
+                        ErrorBlockInfo::new(29, 54, 24),
+                        ErrorBlockInfo::new(19, 55, 25),
+                    ],
+                ),
+                (
+                    ErrorLevel::H,
+                    vec![
+                        ErrorBlockInfo::new(11, 45, 15),
+                        ErrorBlockInfo::new(46, 46, 16),
+                    ],
+                ),
+            ],
+        ),
+        (
+            34,
+            2761,
+            vec![
+                (
+                    ErrorLevel::L,
+                    vec![
+                        ErrorBlockInfo::new(13, 145, 115),
+                        ErrorBlockInfo::new(6, 146, 116),
+                    ],
+                ),
+                (
+                    ErrorLevel::M,
+                    vec![
+                        ErrorBlockInfo::new(14, 74, 46),
+                        ErrorBlockInfo::new(23, 75, 47),
+                    ],
+                ),
+                (
+                    ErrorLevel::Q,
+                    vec![
+                        ErrorBlockInfo::new(44, 54, 24),
+                        ErrorBlockInfo::new(7, 55, 25),
+                    ],
+                ),
+                (
+                    ErrorLevel::H,
+                    vec![
+                        ErrorBlockInfo::new(59, 46, 16),
+                        ErrorBlockInfo::new(1, 47, 17),
+                    ],
+                ),
+            ],
+        ),
+        (
+            35,
+            2876,
+            vec![
+                (
+                    ErrorLevel::L,
+                    vec![
+                        ErrorBlockInfo::new(12, 151, 121),
+                        ErrorBlockInfo::new(7, 152, 122),
+                    ],
+                ),
+                (
+                    ErrorLevel::M,
+                    vec![
+                        ErrorBlockInfo::new(12, 75, 47),
+                        ErrorBlockInfo::new(26, 76, 48),
+                    ],
+                ),
+                (
+                    ErrorLevel::Q,
+                    vec![
+                        ErrorBlockInfo::new(39, 54, 24),
+                        ErrorBlockInfo::new(14, 55, 25),
+                    ],
+                ),
+                (
+                    ErrorLevel::H,
+                    vec![
+                        ErrorBlockInfo::new(22, 45, 15),
+                        ErrorBlockInfo::new(41, 46, 16),
+                    ],
+                ),
+            ],
+        ),
+        (
+            36,
+            3034,
+            vec![
+                (
+                    ErrorLevel::L,
+                    vec![
+                        ErrorBlockInfo::new(6, 151, 121),
+                        ErrorBlockInfo::new(14, 152, 122),
+                    ],
+                ),
+                (
+                    ErrorLevel::M,
+                    vec![
+                        ErrorBlockInfo::new(6, 75, 47),
+                        ErrorBlockInfo::new(34, 76, 48),
+                    ],
+                ),
+                (
+                    ErrorLevel::Q,
+                    vec![
+                        ErrorBlockInfo::new(46, 54, 24),
+                        ErrorBlockInfo::new(10, 55, 25),
+                    ],
+                ),
+                (
+                    ErrorLevel::H,
+                    vec![
+                        ErrorBlockInfo::new(2, 45, 15),
+                        ErrorBlockInfo::new(64, 46, 16),
+                    ],
+                ),
+            ],
+        ),
+        (
+            37,
+            3196,
+            vec![
+                (
+                    ErrorLevel::L,
+                    vec![
+                        ErrorBlockInfo::new(6, 152, 122),
+                        ErrorBlockInfo::new(14, 153, 123),
+                    ],
+                ),
+                (
+                    ErrorLevel::M,
+                    vec![
+                        ErrorBlockInfo::new(6, 74, 46),
+                        ErrorBlockInfo::new(34, 75, 47),
+                    ],
+                ),
+                (
+                    ErrorLevel::Q,
+                    vec![
+                        ErrorBlockInfo::new(46, 54, 24),
+                        ErrorBlockInfo::new(10, 55, 25),
+                    ],
+                ),
+                (
+                    ErrorLevel::H,
+                    vec![
+                        ErrorBlockInfo::new(2, 45, 15),
+                        ErrorBlockInfo::new(64, 46, 16),
+                    ],
+                ),
+            ],
+        ),
+        (
+            38,
+            3362,
+            vec![
+                (
+                    ErrorLevel::L,
+                    vec![
+                        ErrorBlockInfo::new(4, 152, 122),
+                        ErrorBlockInfo::new(18, 153, 123),
+                    ],
+                ),
+                (
+                    ErrorLevel::M,
+                    vec![
+                        ErrorBlockInfo::new(13, 74, 46),
+                        ErrorBlockInfo::new(32, 75, 47),
+                    ],
+                ),
+                (
+                    ErrorLevel::Q,
+                    vec![
+                        ErrorBlockInfo::new(48, 54, 24),
+                        ErrorBlockInfo::new(14, 55, 25),
+                    ],
+                ),
+                (
+                    ErrorLevel::H,
+                    vec![
+                        ErrorBlockInfo::new(42, 45, 15),
+                        ErrorBlockInfo::new(32, 46, 16),
+                    ],
+                ),
+            ],
+        ),
+        (
+            39,
+            3532,
+            vec![
+                (
+                    ErrorLevel::L,
+                    vec![
+                        ErrorBlockInfo::new(20, 147, 117),
+                        ErrorBlockInfo::new(4, 148, 118),
+                    ],
+                ),
+                (
+                    ErrorLevel::M,
+                    vec![
+                        ErrorBlockInfo::new(40, 75, 47),
+                        ErrorBlockInfo::new(7, 76, 48),
+                    ],
+                ),
+                (
+                    ErrorLevel::Q,
+                    vec![
+                        ErrorBlockInfo::new(43, 54, 24),
+                        ErrorBlockInfo::new(22, 55, 25),
+                    ],
+                ),
+                (
+                    ErrorLevel::H,
+                    vec![
+                        ErrorBlockInfo::new(10, 45, 15),
+                        ErrorBlockInfo::new(67, 46, 16),
+                    ],
+                ),
+            ],
+        ),
+        (
+            40,
+            3706,
+            vec![
+                (
+                    ErrorLevel::L,
+                    vec![
+                        ErrorBlockInfo::new(19, 148, 118),
+                        ErrorBlockInfo::new(6, 149, 119),
+                    ],
+                ),
+                (
+                    ErrorLevel::M,
+                    vec![
+                        ErrorBlockInfo::new(18, 75, 47),
+                        ErrorBlockInfo::new(31, 76, 48),
+                    ],
+                ),
+                (
+                    ErrorLevel::Q,
+                    vec![
+                        ErrorBlockInfo::new(34, 54, 24),
+                        ErrorBlockInfo::new(34, 55, 25),
+                    ],
+                ),
+                (
+                    ErrorLevel::H,
+                    vec![
+                        ErrorBlockInfo::new(20, 45, 15),
+                        ErrorBlockInfo::new(61, 46, 16),
+                    ],
+                ),
+            ],
+        ),
     ];
     all_error_info
+}
+
+#[test]
+#[cfg(test)]
+fn sanitycheck_version_information() {
+    let info: Vec<(u8, u16, Vec<(ErrorLevel, Vec<ErrorBlockInfo>)>)> = get_error_block_info();
+    assert_eq!(info.len(), 40);
+    let mut version: i16 = -1;
+    let mut size: u16 = 0;
+    for loop_version in info.clone() {
+        // check that the numbers go up by one
+        if loop_version.0 as i16 != version + 1 {
+            panic!();
+        } else {
+            version = loop_version.0 as i16;
+        }
+        // check that size goes up
+        if loop_version.1 <= size {
+            println!(
+                "last version number was {} the current one is {}",
+                size, loop_version.1
+            );
+            panic!();
+        } else {
+            size = loop_version.1
+        }
+        // make shure that the blocks summed up have the size of the version
+        for memory_case in loop_version.2.clone() {
+            let mut current_memory: u16 = 0;
+            for block in memory_case.1 {
+                current_memory += block.num_block as u16 * block.num_data_bytes as u16;
+            }
+            if current_memory != loop_version.1 {
+                println!(
+                    "this verision has a size of {} bytes but the blocks take up {} bytes",
+                    loop_version.1, current_memory
+                );
+                panic!();
+            }
+        }
+    }
 }

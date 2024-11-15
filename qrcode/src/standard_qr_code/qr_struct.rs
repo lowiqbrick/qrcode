@@ -20,9 +20,12 @@ const BRIGHTBLUE: &str = "\x1b[30;104m";
 const BRIGHTCYAN: &str = "\x1b[30;106m";
 
 /// constant for byte mode indicator
+#[allow(dead_code)]
 const BYTEMODEINDICATOR: u8 = 0b0100;
 
 /// represents the qr code symbols statuses, which are uninitialised, true false
+#[allow(dead_code)]
+
 pub enum SymbolStatus {
     /// white symbol in qr code; false
     LogicalFalse,
@@ -33,6 +36,7 @@ pub enum SymbolStatus {
 }
 
 /// represents the role of symbol inside the qr code
+#[allow(dead_code)]
 pub enum SymbolRole {
     /// role not get determined
     Uninitialised,
@@ -56,6 +60,7 @@ pub enum SymbolRole {
 
 /// contains error correction block information
 #[derive(Clone, Copy)]
+#[allow(dead_code)]
 pub struct ErrorBlockInfo {
     /// amount of this block in this version
     pub num_block: u8,
@@ -79,6 +84,7 @@ impl ErrorBlockInfo {
 }
 
 /// encomposes all data required to generate a qr code
+#[allow(dead_code)]
 pub struct QRData {
     output_data: Vec<Vec<SymbolStatus>>,
     role_data: Vec<Vec<SymbolRole>>,
@@ -88,6 +94,7 @@ pub struct QRData {
     settings: Settings,
 }
 
+#[allow(dead_code)]
 impl QRData {
     pub fn new(input: Settings) -> QRData {
         let (version, error_blocks) =

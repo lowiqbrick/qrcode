@@ -19,6 +19,9 @@ const BRIGHTYELLOW: &str = "\x1b[30;103m";
 const BRIGHTBLUE: &str = "\x1b[30;104m";
 const BRIGHTCYAN: &str = "\x1b[30;106m";
 
+/// constant for byte mode indicator
+const BYTEMODEINDICATOR: u8 = 0b0100;
+
 /// represents the qr code symbols statuses, which are uninitialised, true false
 pub enum SymbolStatus {
     /// white symbol in qr code; false
@@ -51,21 +54,53 @@ pub enum SymbolRole {
     FormatInformation,
 }
 
+/// contains error correction block information
+#[derive(Clone, Copy)]
+pub struct ErrorBlockInfo {
+    /// amount of this block in this version
+    pub num_block: u8,
+    /// total length of the block
+    total_block_len: u8,
+    /// data length in this block
+    pub num_data_bytes: u8,
+    /// number of error correction bytes in this block
+    num_error_bytes: u8,
+}
+
+impl ErrorBlockInfo {
+    pub fn new(num_block: u8, total_block_len: u8, num_data_bytes: u8) -> ErrorBlockInfo {
+        ErrorBlockInfo {
+            num_block,
+            total_block_len,
+            num_data_bytes,
+            num_error_bytes: total_block_len - num_data_bytes,
+        }
+    }
+}
+
 /// encomposes all data required to generate a qr code
 pub struct QRData {
     output_data: Vec<Vec<SymbolStatus>>,
     role_data: Vec<Vec<SymbolRole>>,
-    version: usize,
+    version: u8,
+    error_blocks: Vec<ErrorBlockInfo>,
     width: usize,
     settings: Settings,
 }
 
 impl QRData {
     pub fn new(input: Settings) -> QRData {
-        let (version, _capacity) = get_verison_info(input.information.len());
+        let (version, error_blocks) =
+            match get_verison_info(input.information.len(), input.error_level) {
+                Ok(result) => result,
+                Err(msg) => {
+                    eprintln!("{}", msg);
+                    panic!()
+                }
+            };
         // calculate width of the code
         // width = 17 + 4 * <version number>
-        let width: usize = 17 + 4 * version;
+        let width: usize = 17 + 4 * version as usize;
         // size of the code with the quiet zone
         // quiet zone: 4 square whide border around the qr code
         let width_quite_zone: usize = width + (2 * 4);
@@ -86,16 +121,20 @@ impl QRData {
             output_data,
             role_data,
             version,
+            error_blocks: error_blocks,
             width,
             settings: input,
         }
     }
-    pub fn get_version(&self) -> usize {
-        self.version
+
+    pub fn get_version(&self) -> u8 {
+        self.version as u8
     }
+
     pub fn get_width(&self) -> usize {
         self.width
     }
+
     pub fn get_settings(&self) -> &Settings {
         &self.settings
     }

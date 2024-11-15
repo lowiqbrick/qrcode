@@ -1,54 +1,59 @@
-use std::process::exit;
+use std::u16;
 
-/// Function returns the version of a qr code big enough
-/// to encode the number of codewords (bytes) that are handed to it.
-/// It also returns the maximum of codewords this version can fit. The first
-/// value is the version and the second one is the number of codewords.
-pub fn get_verison_info(text_len: usize) -> (usize, usize) {
-    match text_len {
-        0..=26 => (1, 26),
-        27..=44 => (2, 44),
-        45..=70 => (3, 70),
-        71..=100 => (4, 100),
-        101..=134 => (5, 134),
-        135..=172 => (6, 172),
-        173..=196 => (7, 196),
-        197..=242 => (8, 242),
-        243..=292 => (9, 292),
-        293..=346 => (10, 346),
-        347..=404 => (11, 404),
-        405..=466 => (12, 466),
-        467..=532 => (13, 532),
-        533..=581 => (14, 581),
-        582..=655 => (15, 655),
-        656..=733 => (16, 733),
-        734..=815 => (17, 815),
-        816..=901 => (18, 901),
-        902..=991 => (19, 991),
-        992..=1085 => (20, 1085),
-        1086..=1156 => (21, 1156),
-        1157..=1258 => (22, 1258),
-        1259..=1364 => (23, 1364),
-        1365..=1474 => (24, 1474),
-        1475..=1588 => (25, 1588),
-        1589..=1706 => (26, 1706),
-        1707..=1828 => (27, 1828),
-        1829..=1921 => (28, 1921),
-        1922..=2051 => (29, 2051),
-        2052..=2185 => (30, 2185),
-        2186..=2323 => (31, 2323),
-        2324..=2465 => (32, 2465),
-        2466..=2611 => (33, 2611),
-        2612..=2761 => (34, 2761),
-        2762..=2876 => (35, 2876),
-        2877..=3034 => (36, 3034),
-        3035..=3196 => (37, 3196),
-        3197..=3362 => (38, 3362),
-        3363..=3532 => (39, 3532),
-        3533..=3706 => (40, 3706),
+use crate::input::ErrorLevel;
+use crate::standard_qr_code::version_constants::get_error_block_info;
+
+use super::qr_struct::ErrorBlockInfo;
+
+/// takes text length and error correction level and returns the reqired version
+/// and the total databytes that can be stored in it
+pub fn get_verison_info(
+    text_length: usize,
+    error_level: ErrorLevel,
+) -> Result<(u8, Vec<ErrorBlockInfo>), String> {
+    // check the length of the text for being to long
+    if text_length > (3706 - 750) {
+        eprintln!("text is way to long for a qr code; biggest possible is 2956 characters");
+        panic!();
+    }
+    let search_length: u16 = text_length as u16;
+    let all_info: Vec<(u8, u16, Vec<(ErrorLevel, Vec<ErrorBlockInfo>)>)> = get_error_block_info();
+    // look for the fitting version
+    for version in all_info {
+        // does this one potentally fit the text
+        if search_length >= version.1 {
+            // does the error level fit the text
+            for (error_enum, block_vector) in version.2 {
+                // does the level fit
+                if error_enum == error_level {
+                    let mut current_length: u16 = 0;
+                    for info_block in block_vector.clone() {
+                        current_length +=
+                            info_block.num_block as u16 * info_block.num_data_bytes as u16;
+                    }
+                    // if the length that can be fit is larger or equal to the text length
+                    // select this information for return
+                    if current_length >= search_length {
+                        return Ok((version.0, block_vector.clone()));
+                    }
+                }
+            }
+        }
+    }
+    let return_result: Result<(u8, Vec<ErrorBlockInfo>), String> =
+        Err(String::from("text length or error level invalid"));
+    return_result
+}
+
+/// takes a version number and returns the amount of bits in the character code indicator
+pub fn num_bits_character_code_indicator(version: u8) -> u8 {
+    match version {
+        1..=9 => return 8,
+        10..=26 => return 16,
+        27..=40 => return 16,
         _ => {
-            eprintln!("lext length {} is too long to be encoded", text_len);
-            exit(-1)
+            eprintln!("invlaid version number for bits in character code indicator");
+            panic!();
         }
     }
 }

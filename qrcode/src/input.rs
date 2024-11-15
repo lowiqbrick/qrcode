@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand, ValueEnum};
 
 /// indicates the level of error correction
 /// desired from the generated QR Code
-#[derive(Debug, Subcommand, Clone, ValueEnum)]
+#[derive(Debug, Subcommand, Clone, ValueEnum, Copy, PartialEq)]
 pub enum ErrorLevel {
     /// approx. 7% correction
     L,

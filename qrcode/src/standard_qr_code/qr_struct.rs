@@ -24,6 +24,7 @@ const BRIGHTCYAN: &str = "\x1b[30;106m";
 const BYTEMODEINDICATOR: u8 = 0b0100;
 
 /// represents the qr code symbols statuses, which are uninitialised, true false
+#[derive(Debug)]
 #[allow(dead_code)]
 
 pub enum SymbolStatus {
@@ -36,6 +37,7 @@ pub enum SymbolStatus {
 }
 
 /// represents the role of symbol inside the qr code
+#[derive(Debug)]
 #[allow(dead_code)]
 pub enum SymbolRole {
     /// role not get determined
@@ -59,7 +61,7 @@ pub enum SymbolRole {
 }
 
 /// contains error correction block information
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 #[allow(dead_code)]
 pub struct ErrorBlockInfo {
     /// amount of this block in this version
@@ -84,6 +86,7 @@ impl ErrorBlockInfo {
 }
 
 /// encomposes all data required to generate a qr code
+#[derive(Debug)]
 #[allow(dead_code)]
 pub struct QRData {
     output_data: Vec<Vec<SymbolStatus>>,
@@ -161,13 +164,15 @@ impl Display for QRData {
                     // color output utilising with ANSI
                     // 105 => bright magenta
                     SymbolStatus::Uninitialised => {
-                        write!(f, "{}{}{}", BRIGHTMAGENTA, " ", COLORSTOP)?
+                        write!(f, "{}{}{}", BRIGHTMAGENTA, "  ", COLORSTOP)?
                     }
 
                     // 40 => Black
-                    SymbolStatus::LogicalTrue => write!(f, "{}{}{}", BLACK, " ", COLORSTOP)?,
+                    SymbolStatus::LogicalTrue => write!(f, "{}{}{}", BLACK, "  ", COLORSTOP)?,
                     // 107 => Bright White
-                    SymbolStatus::LogicalFalse => write!(f, "{}{}{}", BRIGHTWHITE, " ", COLORSTOP)?,
+                    SymbolStatus::LogicalFalse => {
+                        write!(f, "{}{}{}", BRIGHTWHITE, "  ", COLORSTOP)?
+                    }
                 }
             }
             // don't forget the newlines
@@ -189,31 +194,41 @@ impl Display for QRData {
                     match self.role_data[row][column] {
                         // for now all magenta; rest to be implemented
                         SymbolRole::Uninitialised => {
-                            write!(f, "{}{}{}", BRIGHTMAGENTA, " ", COLORSTOP)?
+                            write!(f, "{}{}{}", BRIGHTMAGENTA, "  ", COLORSTOP)?
                         }
-                        SymbolRole::QuietZone => write!(f, "{}{}{}", BRIGHTWHITE, " ", COLORSTOP)?,
-                        SymbolRole::FinderPattern => write!(f, "{}{}{}", WHITE, " ", COLORSTOP)?,
+                        SymbolRole::QuietZone => write!(f, "{}{}{}", BRIGHTWHITE, "  ", COLORSTOP)?,
+                        SymbolRole::FinderPattern => write!(f, "{}{}{}", WHITE, "  ", COLORSTOP)?,
                         SymbolRole::AlignmentPattern => {
-                            write!(f, "{}{}{}", BRIGHTBLACK, " ", COLORSTOP)?
+                            write!(f, "{}{}{}", BRIGHTBLACK, "  ", COLORSTOP)?
                         }
                         SymbolRole::TimingPattern => {
-                            write!(f, "{}{}{}", BRIGHTRED, " ", COLORSTOP)?
+                            write!(f, "{}{}{}", BRIGHTRED, "  ", COLORSTOP)?
                         }
-                        SymbolRole::Separator => write!(f, "{}{}{}", RED, " ", COLORSTOP)?,
+                        SymbolRole::Separator => write!(f, "{}{}{}", RED, "  ", COLORSTOP)?,
                         SymbolRole::FormatInformation => {
-                            write!(f, "{}{}{}", BRIGHTYELLOW, " ", COLORSTOP)?
+                            write!(f, "{}{}{}", BRIGHTYELLOW, "  ", COLORSTOP)?
                         }
                         SymbolRole::VersionInformation => {
-                            write!(f, "{}{}{}", BRIGHTCYAN, " ", COLORSTOP)?
+                            write!(f, "{}{}{}", BRIGHTCYAN, "  ", COLORSTOP)?
                         }
                         SymbolRole::EncodingRegion => {
-                            write!(f, "{}{}{}", BRIGHTBLUE, " ", COLORSTOP)?
+                            write!(f, "{}{}{}", BRIGHTBLUE, "  ", COLORSTOP)?
                         }
                     }
                 }
                 // don't forget the newlines
                 write!(f, "{}", "\n")?;
             }
+        }
+        // additional info
+        println!(
+            "version: {}\nwidth: {}\ntext length: {}\nerror blocks:",
+            self.version,
+            self.width,
+            self.settings.information.len()
+        );
+        for error_block in self.error_blocks.clone() {
+            writeln!(f, "    {:?}", error_block)?;
         }
         // end
         write!(f, "{}", "")

@@ -219,16 +219,16 @@ impl Display for QRData {
                 // don't forget the newlines
                 write!(f, "{}", "\n")?;
             }
-        }
-        // additional info
-        println!(
-            "version: {}\nwidth: {}\ntext length: {}\nerror blocks:",
-            self.version,
-            self.width,
-            self.settings.information.len()
-        );
-        for error_block in self.error_blocks.clone() {
-            writeln!(f, "    {:?}", error_block)?;
+            // additional info
+            println!(
+                "version: {}\nwidth: {}\ntext length: {}\nerror blocks:",
+                self.version,
+                self.width,
+                self.settings.information.len()
+            );
+            for error_block in self.error_blocks.clone() {
+                writeln!(f, "    {:?}", error_block)?;
+            }
         }
         // end
         write!(f, "{}", "")

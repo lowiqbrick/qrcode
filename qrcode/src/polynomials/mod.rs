@@ -34,7 +34,7 @@ impl Display for Indeterminate {
 impl Mul for Indeterminate {
     type Output = Indeterminate;
     fn mul(self, rhs: Self) -> Self::Output {
-        Indeterminate::new(self.coefficient * rhs.coefficient, self.degree * rhs.degree)
+        Indeterminate::new(self.coefficient * rhs.coefficient, self.degree + rhs.degree)
     }
 }
 
@@ -70,6 +70,9 @@ impl Polynomial {
                 degrees.push(current_degree);
             }
         }
+        // sort the elements from tallest degree to smallest
+        degrees.sort();
+        degrees.reverse();
         // take all x'es with the same degrees add their coefficients together
         // and save them in a new vector
         let mut result: Vec<Indeterminate> = vec![];
@@ -151,48 +154,147 @@ impl Sub for Polynomial {
     }
 }
 
-#[test]
-pub fn polynomials_math() {
-    // simple test polynomial
-    let test_pol: Polynomial = Polynomial::new(vec![
-        Indeterminate::new(1, 2),
-        Indeterminate::new(2, 1),
-        Indeterminate::new(-4, 0),
-    ]);
-    println!("{}", test_pol);
-    let reduce_test1: Polynomial =
-        Polynomial::new(vec![Indeterminate::new(-3, 4), Indeterminate::new(5, 4)]);
-    println!(
-        "{} simplified to {}",
-        reduce_test1,
-        reduce_test1.clone().reduce()
-    );
-    assert_eq!(
-        reduce_test1.clone().reduce(),
-        Polynomial::new(vec![Indeterminate::new(2, 4)])
-    );
-    let add1: Polynomial =
-        Polynomial::new(vec![Indeterminate::new(4, 3), Indeterminate::new(2, 2)]);
-    let add2: Polynomial = Polynomial::new(vec![Indeterminate::new(-2, 3)]);
-    let result_add: Polynomial = add1.clone() + add2.clone();
-    println!("{} plus {} equals {}", add1, add2, result_add);
-    assert_eq!(
-        result_add,
-        Polynomial::new(vec![Indeterminate::new(2, 3), Indeterminate::new(2, 2)])
-    );
-    println!(
-        "{} minus {} equals {}",
-        add1,
-        add2,
-        add1.clone() - add2.clone()
-    );
-    assert_eq!(
-        add1.clone() - add2.clone(),
-        Polynomial::new(vec![Indeterminate::new(6, 3), Indeterminate::new(2, 2)])
-    );
-    let inde1: Indeterminate = Indeterminate::new(3, 2);
-    let inde2: Indeterminate = Indeterminate::new(-1, 6);
-    let result2: Indeterminate = inde1.clone() * inde2.clone();
-    println!("{} multiplied with {} equals {} ", inde1, inde2, result2);
-    assert_eq!(result2, Indeterminate::new(-3, 12));
+impl IntoIterator for Polynomial {
+    type Item = Indeterminate;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.function.into_iter()
+    }
+}
+
+impl Mul for Polynomial {
+    type Output = Polynomial;
+    fn mul(self, rhs: Self) -> Self::Output {
+        // make shure that something is in the vector
+        assert!(rhs.function.len() != 0);
+        // collect all results
+        let mut polynomial_collector: Vec<Polynomial> = vec![];
+        // multiply an indeterminate with an polynomial
+        println!("terms of the individual steps:");
+        for indeterminate_left in self.clone() {
+            let mut help_result: Polynomial = Polynomial::new(vec![]);
+            // multiply the current indeterminate
+            for indeterminate_right in rhs.clone() {
+                help_result
+                    .function
+                    .push(indeterminate_left * indeterminate_right);
+                println!(
+                    "pushed: {:?} ({},{})",
+                    indeterminate_left * indeterminate_right,
+                    indeterminate_left,
+                    indeterminate_right
+                );
+            }
+            // add this result to the polynomial collector
+            polynomial_collector.push(help_result.clone());
+            println!("{:?}", help_result);
+        }
+        // add all the terms together
+        let mut result_var: Polynomial = Polynomial::new(vec![]);
+        for polynomial_res in polynomial_collector {
+            if result_var.function.len() == 0 {
+                result_var.function = polynomial_res.function;
+            } else {
+                result_var = result_var + polynomial_res;
+            }
+        }
+        result_var.reduce()
+    }
+}
+
+mod tests {
+
+    #[test]
+    pub fn mul_ind() {
+        use super::Indeterminate;
+
+        let inde1: Indeterminate = Indeterminate::new(3, 2);
+        let inde2: Indeterminate = Indeterminate::new(-1, 6);
+        let result2: Indeterminate = inde1.clone() * inde2.clone();
+        println!("{} multiplied with {} equals {} ", inde1, inde2, result2);
+        assert_eq!(result2, Indeterminate::new(-3, 8));
+    }
+
+    #[test]
+    pub fn reduce_poly() {
+        use super::{Indeterminate, Polynomial};
+
+        // simple test polynomial
+        let test_pol: Polynomial = Polynomial::new(vec![
+            Indeterminate::new(1, 2),
+            Indeterminate::new(2, 1),
+            Indeterminate::new(-4, 0),
+        ]);
+        println!("{}", test_pol);
+        let reduce_test1: Polynomial =
+            Polynomial::new(vec![Indeterminate::new(-3, 4), Indeterminate::new(5, 4)]);
+        println!(
+            "{} simplified to {}",
+            reduce_test1,
+            reduce_test1.clone().reduce()
+        );
+        assert_eq!(
+            reduce_test1.clone().reduce(),
+            Polynomial::new(vec![Indeterminate::new(2, 4)])
+        );
+    }
+
+    #[test]
+    pub fn add_poly() {
+        use super::{Indeterminate, Polynomial};
+
+        let add1: Polynomial =
+            Polynomial::new(vec![Indeterminate::new(4, 3), Indeterminate::new(2, 2)]);
+        let add2: Polynomial = Polynomial::new(vec![Indeterminate::new(-2, 3)]);
+        let result_add: Polynomial = add1.clone() + add2.clone();
+        println!("{} plus {} equals {}", add1, add2, result_add);
+        assert_eq!(
+            result_add,
+            Polynomial::new(vec![Indeterminate::new(2, 3), Indeterminate::new(2, 2)])
+        );
+    }
+
+    #[test]
+    pub fn minus_poly() {
+        use super::{Indeterminate, Polynomial};
+
+        let add1: Polynomial =
+            Polynomial::new(vec![Indeterminate::new(4, 3), Indeterminate::new(2, 2)]);
+        let add2: Polynomial = Polynomial::new(vec![Indeterminate::new(-2, 3)]);
+        println!(
+            "{} minus {} equals {}",
+            add1,
+            add2,
+            add1.clone() - add2.clone()
+        );
+        assert_eq!(
+            add1.clone() - add2.clone(),
+            Polynomial::new(vec![Indeterminate::new(6, 3), Indeterminate::new(2, 2)])
+        );
+    }
+
+    #[test]
+    pub fn mul_poly() {
+        use super::{Indeterminate, Polynomial};
+
+        let mul1: Polynomial = Polynomial::new(vec![
+            Indeterminate::new(1, 2),
+            Indeterminate::new(1, 1),
+            Indeterminate::new(1, 0),
+        ]);
+        let mul2: Polynomial =
+            Polynomial::new(vec![Indeterminate::new(1, 1), Indeterminate::new(1, 0)]);
+        let result = mul1.clone() * mul2.clone();
+        println!("{} multiplied by {} equals {}", mul1, mul2, result);
+        assert_eq!(
+            result,
+            Polynomial::new(vec![
+                Indeterminate::new(1, 3),
+                Indeterminate::new(2, 2),
+                Indeterminate::new(2, 1),
+                Indeterminate::new(1, 0),
+            ])
+        );
+    }
 }

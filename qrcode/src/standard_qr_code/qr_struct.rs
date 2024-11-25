@@ -23,6 +23,114 @@ const BRIGHTCYAN: &str = "\x1b[30;106m";
 #[allow(dead_code)]
 const BYTEMODEINDICATOR: u8 = 0b0100;
 
+/// supports writing u8 values bitwise in a vector
+#[derive(Clone, Debug)]
+struct MyBitVector {
+    /// holds the max size of bytes this struct holds
+    capacity: u16,
+    /// holds the current bit that will be written to next
+    curr_position: u32,
+    // the actual data
+    data: Vec<u8>,
+}
+
+impl MyBitVector {
+    /// generates new struct with max_size bytes
+    fn new_with_capacity(max_size: u16) -> MyBitVector {
+        MyBitVector {
+            capacity: max_size,
+            curr_position: 0,
+            data: Vec::with_capacity(max_size as usize),
+        }
+    }
+
+    /// writes size bits of value into MyBitVector
+    fn push(&mut self, value: u8, size: u8) {
+        // which bit should be read from
+        let mut current_bit_read: u8 = size - 1;
+        for index in self.curr_position..self.curr_position + size as u32 {
+            // println!("read bit {}", current_bit_read);
+            assert!(current_bit_read < 8);
+            let current_bit: u8;
+            // get the value of the bit in question
+            current_bit = match current_bit_read {
+                0 => value & 0b0000_0001,
+                1 => (value & 0b0000_0010) >> 1,
+                2 => (value & 0b0000_0100) >> 2,
+                3 => (value & 0b0000_1000) >> 3,
+                4 => (value & 0b0001_0000) >> 4,
+                5 => (value & 0b0010_0000) >> 5,
+                6 => (value & 0b0100_0000) >> 6,
+                7 => (value & 0b1000_0000) >> 7,
+                _ => {
+                    panic!("tried to read bit {} of an u8", current_bit_read);
+                }
+            };
+            // update for next loop
+            if current_bit_read != 0 {
+                current_bit_read -= 1;
+            }
+            // which bit of the byte index should be written into
+            let current_bit_write: u32 = (7 - (index % 8)) % 8;
+            // write the value into the data vector
+            // round down aka cutt of all decimals of a f32 by converting it to an u-type
+            let byte_index: u16 = (self.curr_position as f32 / 8.0) as u16;
+            // println!("{}: {}", byte_index, self.capacity);
+            assert!(byte_index < self.capacity);
+            // extend the vector if a new byte should be written to
+            if current_bit_write == 7 {
+                self.data.push(0);
+            }
+            match current_bit_write {
+                0 => {
+                    self.data[byte_index as usize] = self.data[byte_index as usize] | current_bit;
+                }
+                1 => {
+                    self.data[byte_index as usize] =
+                        self.data[byte_index as usize] | (current_bit << 1);
+                }
+                2 => {
+                    self.data[byte_index as usize] =
+                        self.data[byte_index as usize] | (current_bit << 2);
+                }
+                3 => {
+                    self.data[byte_index as usize] =
+                        self.data[byte_index as usize] | (current_bit << 3);
+                }
+                4 => {
+                    self.data[byte_index as usize] =
+                        self.data[byte_index as usize] | (current_bit << 4);
+                }
+                5 => {
+                    self.data[byte_index as usize] =
+                        self.data[byte_index as usize] | (current_bit << 5);
+                }
+                6 => {
+                    self.data[byte_index as usize] =
+                        self.data[byte_index as usize] | (current_bit << 6);
+                }
+                7 => {
+                    self.data[byte_index as usize] =
+                        self.data[byte_index as usize] | (current_bit << 7);
+                }
+                _ => panic!("attempted to write to bit {} in u8", current_bit_write),
+            }
+            println!(
+                "read value {} from bit {} and wrote it to bit {}",
+                current_bit,
+                current_bit_read + 1,
+                current_bit_write
+            );
+            // update the byte index
+            self.curr_position += 1;
+        }
+    }
+
+    fn get_data(&self) -> Vec<u8> {
+        self.data.clone()
+    }
+}
+
 /// represents the qr code symbols statuses, which are uninitialised, true false
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -99,6 +207,7 @@ pub struct QRData {
 
 #[allow(dead_code)]
 impl QRData {
+    /// generate the data
     pub fn new(input: Settings) -> QRData {
         let (version, error_blocks) =
             match get_verison_info(input.information.len(), input.error_level) {
@@ -147,6 +256,16 @@ impl QRData {
 
     pub fn get_settings(&self) -> &Settings {
         &self.settings
+    }
+
+    // the error blocks with only the databytes/text inserted (no Reed-Solomon)
+    pub fn get_raw_bitvectors(&self) -> Vec<Vec<u8>> {
+        let result_blocks: Vec<Vec<u8>> = vec![];
+        let text: String = self.settings.information.clone();
+        let mut char_index: u8 = 0;
+        // go throught all error blocks
+        for error_block in self.error_blocks.clone().into_iter() {}
+        result_blocks
     }
 }
 
@@ -232,5 +351,22 @@ impl Display for QRData {
         }
         // end
         write!(f, "{}", "")
+    }
+}
+
+mod tests {
+    use super::MyBitVector;
+
+    #[test]
+    fn test_my_vect() {
+        let mut test_vec: MyBitVector = MyBitVector::new_with_capacity(2);
+        test_vec.push(0b0000_0100, 4);
+        test_vec.push(0b0101_0101, 8);
+        println!(
+            "created: {:?}: {:?}",
+            test_vec.data,
+            vec![0b0100_0101, 0b0101_0000]
+        );
+        assert_eq!(test_vec.data, vec![0b0100_0101, 0b0101_0000]);
     }
 }

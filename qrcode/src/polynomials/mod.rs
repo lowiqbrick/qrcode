@@ -7,11 +7,11 @@ struct Indeterminate {
     /// factor in front pof the indeterminate
     coefficient: i16,
     /// the 'to the power of' factor
-    degree: u16,
+    degree: i16,
 }
 
 impl Indeterminate {
-    fn new(coefficient: i16, degree: u16) -> Indeterminate {
+    fn new(coefficient: i16, degree: i16) -> Indeterminate {
         Indeterminate {
             coefficient,
             degree,
@@ -48,21 +48,28 @@ struct Polynomial {
 impl Polynomial {
     #[allow(dead_code)]
     fn new(function: Vec<Indeterminate>) -> Polynomial {
-        Polynomial { function }
+        let mut mutable_function = function;
+        // sort the polynomial
+        mutable_function.sort_by_key(|indet_struct| indet_struct.degree);
+        // create new reduced polynomial
+        Polynomial {
+            function: mutable_function,
+        }
+        .reduce()
     }
 
     /// method to reduce
     fn reduce(&mut self) -> Polynomial {
         // vector to collect all degrees
-        let mut degrees: Vec<u16> = vec![];
+        let mut degrees: Vec<i16> = vec![];
         for x in self.function.iter() {
             // save local degree
-            let current_degree: u16 = x.degree;
+            let current_degree: i16 = x.degree;
             // check if current degree is already in degree vector
             // if not: put it in
             let mut is_in_already: bool = false;
             for y in degrees.iter() {
-                if current_degree == *y {
+                if current_degree == (*y).try_into().unwrap() {
                     is_in_already = true;
                 }
             }
@@ -171,7 +178,6 @@ impl Mul for Polynomial {
         // collect all results
         let mut polynomial_collector: Vec<Polynomial> = vec![];
         // multiply an indeterminate with an polynomial
-        println!("terms of the individual steps:");
         for indeterminate_left in self.clone() {
             let mut help_result: Polynomial = Polynomial::new(vec![]);
             // multiply the current indeterminate
@@ -179,16 +185,9 @@ impl Mul for Polynomial {
                 help_result
                     .function
                     .push(indeterminate_left * indeterminate_right);
-                println!(
-                    "pushed: {:?} ({},{})",
-                    indeterminate_left * indeterminate_right,
-                    indeterminate_left,
-                    indeterminate_right
-                );
             }
             // add this result to the polynomial collector
             polynomial_collector.push(help_result.clone());
-            println!("{:?}", help_result);
         }
         // add all the terms together
         let mut result_var: Polynomial = Polynomial::new(vec![]);

@@ -1,5 +1,5 @@
 use std::fmt::{Display, Formatter, Result};
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Div, Mul, Sub};
 
 /// structure that represents an indetermiante as coefficient*x^degree
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -58,7 +58,8 @@ impl Polynomial {
         .reduce()
     }
 
-    /// method to reduce
+    /// method to reduce/make the polynomial look good
+    /// (indeterminates get sorted from highest power degree to lowest)
     fn reduce(&mut self) -> Polynomial {
         // vector to collect all degrees
         let mut degrees: Vec<i16> = vec![];
@@ -92,7 +93,16 @@ impl Polynomial {
             }
             result.push(Indeterminate::new(degree_coefficient, *degree));
         }
-        self.function = result.clone();
+        // delete terms that have a coefficient equal zero
+        let mut catch_zero_coefficients: Vec<Indeterminate> = vec![];
+        for indeter in result.iter() {
+            if indeter.coefficient == 0 {
+                continue;
+            } else {
+                catch_zero_coefficients.push(indeter.clone());
+            }
+        }
+        self.function = catch_zero_coefficients.clone();
         Polynomial { function: result }
     }
 }
@@ -202,6 +212,63 @@ impl Mul for Polynomial {
     }
 }
 
+impl Div for Polynomial {
+    type Output = Polynomial;
+    fn div(self, rhs: Self) -> Self::Output {
+        let mut quotient: Vec<Indeterminate> = vec![];
+        if rhs.function.len() == 0 {
+            panic!("tried to divide by polynomial of length zero");
+        }
+        if self.function.len() == 0 {
+            panic!("tried to divide a polynomial of zero length");
+        }
+        let mut help: Polynomial = rhs.clone();
+        // make shure all is sorted
+        let divisor: Polynomial = help.reduce().clone();
+        let mut working_dividend: Polynomial = self.clone().reduce();
+        let coefficient_divisor: i16 = divisor.function[0].coefficient;
+        let degree_divisor: i16 = divisor.function[0].degree;
+        // keep track of number of loops and abort if necessary
+        let mut highest_poly_divident: i16 = working_dividend.function[0].degree;
+        loop {
+            // check what the divisor needs to be multiplied by so it's highest powered term equals the
+            // highest powered term of the dividend
+            let coefficient_divident: i16 = working_dividend.function[0].coefficient;
+            let degree_divident: i16 = working_dividend.function[0].degree;
+            let coefficient_factor: i16 = coefficient_divident / coefficient_divisor;
+            let degree_difference: i16 = degree_divident as i16 - degree_divisor as i16;
+            // division complete?
+            if degree_difference < 0 {
+                return Polynomial::new(quotient).reduce();
+            }
+            let result_part: Indeterminate =
+                Indeterminate::new(coefficient_factor, degree_difference as i16);
+            quotient.push(result_part);
+            // multiply the divisor by an indeterminate for later subtraction
+            let working_divisor: Polynomial = divisor.clone() * Polynomial::new(vec![result_part]);
+            // println!(
+            //     "work dividend: {}; divisor: {}; working divisor {}; result part: {}; quotient so far: {}",
+            //     working_dividend,
+            //     divisor,
+            //     working_divisor,
+            //     result_part,
+            //     Polynomial::new(quotient.clone())
+            // );
+            // subtract working_divisor from dividend
+            working_dividend = working_dividend - working_divisor;
+            working_dividend.reduce();
+            // division complete?
+            if working_dividend.function.len() == 0 {
+                return Polynomial::new(quotient).reduce();
+            }
+            // println!("new working divident {}", working_dividend);
+            // prepare for next loop
+            highest_poly_divident -= 1;
+            assert!(highest_poly_divident >= 0);
+        }
+    }
+}
+
 mod tests {
 
     #[test]
@@ -293,6 +360,32 @@ mod tests {
                 Indeterminate::new(2, 2),
                 Indeterminate::new(2, 1),
                 Indeterminate::new(1, 0),
+            ])
+        );
+    }
+
+    #[test]
+    fn poly_div() {
+        use super::{Indeterminate, Polynomial};
+        let divident = Polynomial::new(vec![
+            Indeterminate::new(1, 3),
+            Indeterminate::new(1, 2),
+            Indeterminate::new(-9, 1),
+            Indeterminate::new(7, 0),
+        ]);
+        let divisor = Polynomial::new(vec![Indeterminate::new(1, 1), Indeterminate::new(-1, 0)]);
+        println!(
+            "{} divided by {} equals {}",
+            divident,
+            divisor,
+            divident.clone() / divisor.clone()
+        );
+        assert_eq!(
+            divident.clone() / divisor.clone(),
+            Polynomial::new(vec![
+                Indeterminate::new(1, 2),
+                Indeterminate::new(2, 1),
+                Indeterminate::new(-7, 0)
             ])
         );
     }

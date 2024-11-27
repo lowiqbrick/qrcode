@@ -304,6 +304,22 @@ mod tests {
             reduce_test1.clone().reduce(),
             Polynomial::new(vec![Indeterminate::new(2, 4)])
         );
+        // make shure coefficients of value zero get deleted
+        let mut test_pol_zero: Polynomial = Polynomial::new(vec![
+            Indeterminate::new(0, 3),
+            Indeterminate::new(0, 1),
+            Indeterminate::new(14, 0),
+            // also check sorting while being at it
+            Indeterminate::new(-3, 2),
+        ]);
+        let expected_result: Polynomial =
+            Polynomial::new(vec![Indeterminate::new(-3, 2), Indeterminate::new(14, 0)]);
+        println!(
+            "{} should get reduced to {}",
+            test_pol_zero.reduce(),
+            expected_result
+        );
+        assert_eq!(test_pol_zero.reduce(), expected_result);
     }
 
     #[test]

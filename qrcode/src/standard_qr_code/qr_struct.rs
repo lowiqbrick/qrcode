@@ -25,6 +25,7 @@ const BYTEMODEINDICATOR: u8 = 0b0100;
 
 /// supports writing u8 values bitwise in a vector
 #[derive(Clone, Debug)]
+#[allow(dead_code)]
 struct MyBitVector {
     /// holds the max size of bytes this struct holds
     capacity: u16,
@@ -34,6 +35,7 @@ struct MyBitVector {
     data: Vec<u8>,
 }
 
+#[allow(dead_code)]
 impl MyBitVector {
     /// generates new struct with max_size bytes
     fn new_with_capacity(max_size: u16) -> MyBitVector {
@@ -259,12 +261,13 @@ impl QRData {
     }
 
     // the error blocks with only the databytes/text inserted (no Reed-Solomon)
+    #[allow(dead_code)]
     pub fn get_raw_bitvectors(&self) -> Vec<Vec<u8>> {
         let result_blocks: Vec<Vec<u8>> = vec![];
-        let text: String = self.settings.information.clone();
-        let mut char_index: u8 = 0;
+        let _text: String = self.settings.information.clone();
+        let _char_index: u8 = 0;
         // go throught all error blocks
-        for error_block in self.error_blocks.clone().into_iter() {}
+        for _error_block in self.error_blocks.clone().into_iter() {}
         result_blocks
     }
 }
@@ -355,10 +358,10 @@ impl Display for QRData {
 }
 
 mod tests {
-    use super::MyBitVector;
 
     #[test]
     fn test_my_vect() {
+        use super::MyBitVector;
         let mut test_vec: MyBitVector = MyBitVector::new_with_capacity(2);
         test_vec.push(0b0000_0100, 4);
         test_vec.push(0b0101_0101, 8);

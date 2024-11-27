@@ -405,4 +405,29 @@ mod tests {
             ])
         );
     }
+
+    #[test]
+    // with numbers from the veritasium video
+    // https://www.youtube.com/watch?v=w5ebcowAJD8
+    fn calculate_a_b() {
+        use super::{Indeterminate, Polynomial};
+        let poly1: Polynomial = Polynomial::new(vec![
+            Indeterminate::new(1, 5),
+            Indeterminate::new(-2, 4),
+            Indeterminate::new(3, 3),
+            Indeterminate::new(5, 2),
+        ]);
+        let poly2: Polynomial =
+            Polynomial::new(vec![Indeterminate::new(1, 1), Indeterminate::new(-1, 0)])
+                * Polynomial::new(vec![Indeterminate::new(1, 1), Indeterminate::new(-2, 0)]);
+        let quotient: Polynomial = poly1.clone() / poly2.clone();
+        println!("{} divided by {} equals {}", poly1, poly2, quotient);
+        let mut a_b_term = (quotient.clone() * poly2.clone()) - poly1.clone();
+        a_b_term.reduce();
+        println!("the term for a and b is {}", a_b_term);
+        assert_eq!(
+            a_b_term,
+            Polynomial::new(vec![Indeterminate::new(-37, 1), Indeterminate::new(30, 0)])
+        );
+    }
 }

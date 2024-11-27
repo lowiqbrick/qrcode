@@ -260,7 +260,7 @@ impl QRData {
         &self.settings
     }
 
-    // the error blocks with only the databytes/text inserted (no Reed-Solomon)
+    // the error blocks with the Reed-Solomon encoding performed
     #[allow(dead_code)]
     pub fn get_raw_bitvectors(&self) -> Vec<Vec<u8>> {
         let result_blocks: Vec<Vec<u8>> = vec![];

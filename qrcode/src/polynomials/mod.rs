@@ -367,7 +367,7 @@ mod tests {
         ]);
         let mul2: Polynomial =
             Polynomial::new(vec![Indeterminate::new(1, 1), Indeterminate::new(1, 0)]);
-        let result = mul1.clone() * mul2.clone();
+        let result: Polynomial = mul1.clone() * mul2.clone();
         println!("{} multiplied by {} equals {}", mul1, mul2, result);
         assert_eq!(
             result,
@@ -383,13 +383,14 @@ mod tests {
     #[test]
     fn poly_div() {
         use super::{Indeterminate, Polynomial};
-        let divident = Polynomial::new(vec![
+        let divident: Polynomial = Polynomial::new(vec![
             Indeterminate::new(1, 3),
             Indeterminate::new(1, 2),
             Indeterminate::new(-9, 1),
             Indeterminate::new(7, 0),
         ]);
-        let divisor = Polynomial::new(vec![Indeterminate::new(1, 1), Indeterminate::new(-1, 0)]);
+        let divisor: Polynomial =
+            Polynomial::new(vec![Indeterminate::new(1, 1), Indeterminate::new(-1, 0)]);
         println!(
             "{} divided by {} equals {}",
             divident,
@@ -422,9 +423,13 @@ mod tests {
                 * Polynomial::new(vec![Indeterminate::new(1, 1), Indeterminate::new(-2, 0)]);
         let quotient: Polynomial = poly1.clone() / poly2.clone();
         println!("{} divided by {} equals {}", poly1, poly2, quotient);
-        let mut a_b_term = (quotient.clone() * poly2.clone()) - poly1.clone();
+        let mut a_b_term: Polynomial = (quotient.clone() * poly2.clone()) - poly1.clone();
         a_b_term.reduce();
-        println!("the term for a and b is {}", a_b_term);
+        println!("the complete term is {}", quotient.clone() * poly2.clone());
+        println!(
+            "the term for a and b is {} and the resulting values are: a={}, b={}",
+            a_b_term, a_b_term.function[0].coefficient, a_b_term.function[1].coefficient
+        );
         assert_eq!(
             a_b_term,
             Polynomial::new(vec![Indeterminate::new(-37, 1), Indeterminate::new(30, 0)])

@@ -248,14 +248,17 @@ impl QRData {
         }
     }
 
+    /// returns the version
     pub fn get_version(&self) -> u8 {
         self.version as u8
     }
 
+    /// returns the witdh
     pub fn get_width(&self) -> usize {
         self.width
     }
 
+    /// returns a reference to the setting
     pub fn get_settings(&self) -> &Settings {
         &self.settings
     }
@@ -269,6 +272,70 @@ impl QRData {
         // go throught all error blocks
         for _error_block in self.error_blocks.clone().into_iter() {}
         result_blocks
+    }
+
+    // draws the quiet zone around the code
+    pub fn quiet_zone(&mut self) {
+        let width = self.output_data.len();
+        for x in 0..width {
+            for y in 0..width {
+                if x <= 3 || x >= width - 4 || y <= 3 || y >= width - 4 {
+                    self.output_data[x][y] = SymbolStatus::LogicalFalse;
+                    self.role_data[x][y] = SymbolRole::QuietZone;
+                }
+            }
+        }
+    }
+
+    /// adds the finder patterns for the code
+    pub fn finders(&mut self) {
+        if self.settings.debugging {
+            println!(
+                "width: {} height: {}",
+                self.output_data.len(),
+                self.output_data[0].len()
+            );
+        }
+        // width with quiet zone
+        let width: usize = self.output_data[0].len();
+        // vector that contains the centre coordinate of the finder patterns
+        // centre qiet pattern = quiet zone + distance to centre - index starting at zero
+        // 7 = 4 + 4 - 1
+        let pattern_centers: Vec<(usize, usize)> = vec![(7, 7), (width - 8, 7), (7, width - 8)];
+        // go over the qrcode to fill in the patterns
+        // left to right
+        for x in 0..width {
+            // top to bottom
+            for y in 0..width {
+                // check manhattan distance from current coodinate to pattern centers
+                for pattern_centre in pattern_centers.iter() {
+                    let mut x_difference: i16 = x as i16 - pattern_centre.0 as i16;
+                    x_difference = x_difference.abs();
+                    let mut y_difference: i16 = y as i16 - pattern_centre.1 as i16;
+                    y_difference = y_difference.abs();
+                    // make shure that the current position is within the pattern
+                    if x_difference < 4 && y_difference < 4 {
+                        match x_difference {
+                            0..2 => self.output_data[x][y] = SymbolStatus::LogicalTrue,
+                            2 => match y_difference {
+                                0..3 => self.output_data[x][y] = SymbolStatus::LogicalFalse,
+                                3 => self.output_data[x][y] = SymbolStatus::LogicalTrue,
+                                _ => {
+                                    eprintln!("invalid y_difference {}", y_difference);
+                                    panic!()
+                                }
+                            },
+                            3 => self.output_data[x][y] = SymbolStatus::LogicalTrue,
+                            _ => {
+                                eprintln!("invalid x_difference {}", x_difference);
+                                panic!()
+                            }
+                        }
+                        self.role_data[x][y] = SymbolRole::FinderPattern;
+                    }
+                }
+            }
+        }
     }
 }
 

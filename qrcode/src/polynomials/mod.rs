@@ -434,5 +434,9 @@ mod tests {
             a_b_term,
             Polynomial::new(vec![Indeterminate::new(-37, 1), Indeterminate::new(30, 0)])
         );
+        for char in 0..=255 {
+            println!("{}th char: {}", char, char as u8 as char);
+        }
+        panic!();
     }
 }

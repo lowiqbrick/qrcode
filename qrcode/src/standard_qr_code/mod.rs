@@ -10,7 +10,9 @@ pub fn qr_code(input: Settings) {
         println!("{:?}", input);
     }
     // struct for all data
-    let qrdata: QRData = QRData::new(input);
+    let mut qrdata: QRData = QRData::new(input);
+    qrdata.quiet_zone();
+    qrdata.finders();
     if qrdata.get_settings().debugging {
         print!("{}", qrdata);
     }

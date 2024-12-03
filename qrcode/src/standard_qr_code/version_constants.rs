@@ -1212,12 +1212,12 @@ pub fn alignment_pattern_data(version: u8) -> (u8, Vec<u8>) {
         26 => (22, vec![6, 30, 58, 86, 114]),
         27 => (22, vec![6, 34, 62, 90, 118]),
         28 => (33, vec![6, 26, 50, 74, 98, 122]),
-        29 => (33, vec![6, 30, 54, 78, 102, 122]),
-        30 => (33, vec![6, 26, 52, 78, 104, 122]),
-        31 => (33, vec![6, 30, 56, 82, 108, 122]),
-        32 => (33, vec![6, 34, 60, 86, 112, 122]),
-        33 => (33, vec![6, 30, 58, 86, 114, 122]),
-        34 => (33, vec![6, 34, 62, 90, 118, 122]),
+        29 => (33, vec![6, 30, 54, 78, 102, 126]),
+        30 => (33, vec![6, 26, 52, 78, 104, 130]),
+        31 => (33, vec![6, 30, 56, 82, 108, 134]),
+        32 => (33, vec![6, 34, 60, 86, 112, 138]),
+        33 => (33, vec![6, 30, 58, 86, 114, 142]),
+        34 => (33, vec![6, 34, 62, 90, 118, 146]),
         35 => (46, vec![6, 30, 54, 78, 102, 126, 150]),
         36 => (46, vec![6, 24, 50, 76, 102, 128, 154]),
         37 => (46, vec![6, 28, 54, 80, 106, 132, 158]),
@@ -1285,9 +1285,22 @@ fn sanity_check_alignment_pattern() {
         eprintln!("version: {}", version);
         let version_data = alignment_pattern_data(version);
         if version_data.1.len() >= 3 {
-            let difference = version_data.1[0] - version_data.1[0];
-            for index in 0..version_data.1.len() - 1 {
-                assert_eq!(difference, version_data.1[index] - version_data.1[index]);
+            if version_data.1.len() == 3 {
+                let difference = version_data.1[1] - version_data.1[0];
+                for index in 0..version_data.1.len() - 1 {
+                    assert_eq!(
+                        difference,
+                        version_data.1[index + 1] - version_data.1[index]
+                    );
+                }
+            } else {
+                let difference = version_data.1[2] - version_data.1[1];
+                for index in 1..version_data.1.len() - 1 {
+                    assert_eq!(
+                        difference,
+                        version_data.1[index + 1] - version_data.1[index]
+                    );
+                }
             }
         }
     }

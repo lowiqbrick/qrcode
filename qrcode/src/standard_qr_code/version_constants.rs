@@ -4,6 +4,8 @@ use crate::input::ErrorLevel;
 
 use super::qr_struct::ErrorBlockInfo;
 
+/// delivers a vector containing tuples which contain
+/// (version number, codewords available, error block information)
 pub fn get_error_block_info() -> Vec<(u8, u16, Vec<(ErrorLevel, Vec<ErrorBlockInfo>)>)> {
     let all_error_info: Vec<(u8, u16, Vec<(ErrorLevel, Vec<ErrorBlockInfo>)>)> = vec![
         (
@@ -1178,6 +1180,57 @@ pub fn get_error_block_info() -> Vec<(u8, u16, Vec<(ErrorLevel, Vec<ErrorBlockIn
     all_error_info
 }
 
+/// function that returns a tuple which contains number of alignment patterns
+/// and their centre coordinates
+pub fn alignment_pattern_data(version: u8) -> (u8, Vec<u8>) {
+    match version {
+        1 => (0, vec![]),
+        2 => (1, vec![6, 18]),
+        3 => (1, vec![6, 22]),
+        4 => (1, vec![6, 26]),
+        5 => (1, vec![6, 30]),
+        6 => (1, vec![6, 34]),
+        7 => (6, vec![6, 22, 38]),
+        8 => (6, vec![6, 24, 42]),
+        9 => (6, vec![6, 26, 46]),
+        10 => (6, vec![6, 28, 50]),
+        11 => (6, vec![6, 30, 54]),
+        12 => (6, vec![6, 32, 58]),
+        13 => (6, vec![6, 34, 62]),
+        14 => (13, vec![6, 26, 46, 66]),
+        15 => (13, vec![6, 26, 48, 70]),
+        16 => (13, vec![6, 26, 50, 74]),
+        17 => (13, vec![6, 30, 54, 78]),
+        18 => (13, vec![6, 30, 56, 82]),
+        19 => (13, vec![6, 30, 58, 86]),
+        20 => (13, vec![6, 34, 62, 90]),
+        21 => (22, vec![6, 28, 50, 72, 94]),
+        22 => (22, vec![6, 26, 50, 74, 98]),
+        23 => (22, vec![6, 30, 54, 78, 102]),
+        24 => (22, vec![6, 28, 54, 80, 106]),
+        25 => (22, vec![6, 32, 58, 84, 110]),
+        26 => (22, vec![6, 30, 58, 86, 114]),
+        27 => (22, vec![6, 34, 62, 90, 118]),
+        28 => (33, vec![6, 26, 50, 74, 98, 122]),
+        29 => (33, vec![6, 30, 54, 78, 102, 122]),
+        30 => (33, vec![6, 26, 52, 78, 104, 122]),
+        31 => (33, vec![6, 30, 56, 82, 108, 122]),
+        32 => (33, vec![6, 34, 60, 86, 112, 122]),
+        33 => (33, vec![6, 30, 58, 86, 114, 122]),
+        34 => (33, vec![6, 34, 62, 90, 118, 122]),
+        35 => (46, vec![6, 30, 54, 78, 102, 126, 150]),
+        36 => (46, vec![6, 24, 50, 76, 102, 128, 154]),
+        37 => (46, vec![6, 28, 54, 80, 106, 132, 158]),
+        38 => (46, vec![6, 32, 58, 84, 110, 136, 162]),
+        39 => (46, vec![6, 26, 54, 82, 110, 138, 166]),
+        40 => (46, vec![6, 30, 58, 86, 114, 142, 170]),
+        _ => {
+            eprintln!("version number {}", version);
+            panic!();
+        }
+    }
+}
+
 #[test]
 #[cfg(test)]
 fn sanitycheck_version_information() {
@@ -1218,6 +1271,23 @@ fn sanitycheck_version_information() {
                     version, loop_version.1, memory_case.0, current_memory
                 );
                 panic!();
+            }
+        }
+    }
+}
+
+#[test]
+#[cfg(test)]
+// if there are more than tree rows/columns of alignment patterns
+// there sould be spaced out equally from one another
+fn sanity_check_alignment_pattern() {
+    for version in 1..=40 {
+        eprintln!("version: {}", version);
+        let version_data = alignment_pattern_data(version);
+        if version_data.1.len() >= 3 {
+            let difference = version_data.1[0] - version_data.1[0];
+            for index in 0..version_data.1.len() - 1 {
+                assert_eq!(difference, version_data.1[index] - version_data.1[index]);
             }
         }
     }

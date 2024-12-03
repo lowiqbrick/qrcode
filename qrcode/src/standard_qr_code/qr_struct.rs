@@ -134,7 +134,7 @@ impl MyBitVector {
 }
 
 /// represents the qr code symbols statuses, which are uninitialised, true false
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[allow(dead_code)]
 
 pub enum SymbolStatus {
@@ -147,7 +147,7 @@ pub enum SymbolStatus {
 }
 
 /// represents the role of symbol inside the qr code
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 #[allow(dead_code)]
 pub enum SymbolRole {
     /// role not get determined
@@ -296,6 +296,74 @@ impl QRData {
                 self.output_data[0].len()
             );
         }
+        // finding pattern
+        let logical_true = SymbolStatus::LogicalTrue;
+        let logical_false = SymbolStatus::LogicalFalse;
+        let pattern = vec![
+            vec![
+                logical_true,
+                logical_true,
+                logical_true,
+                logical_true,
+                logical_true,
+                logical_true,
+                logical_true,
+            ],
+            vec![
+                logical_true,
+                logical_false,
+                logical_false,
+                logical_false,
+                logical_false,
+                logical_false,
+                logical_true,
+            ],
+            vec![
+                logical_true,
+                logical_false,
+                logical_true,
+                logical_true,
+                logical_true,
+                logical_false,
+                logical_true,
+            ],
+            vec![
+                logical_true,
+                logical_false,
+                logical_true,
+                logical_true,
+                logical_true,
+                logical_false,
+                logical_true,
+            ],
+            vec![
+                logical_true,
+                logical_false,
+                logical_true,
+                logical_true,
+                logical_true,
+                logical_false,
+                logical_true,
+            ],
+            vec![
+                logical_true,
+                logical_false,
+                logical_false,
+                logical_false,
+                logical_false,
+                logical_false,
+                logical_true,
+            ],
+            vec![
+                logical_true,
+                logical_true,
+                logical_true,
+                logical_true,
+                logical_true,
+                logical_true,
+                logical_true,
+            ],
+        ];
         // width with quiet zone
         let width: usize = self.output_data[0].len();
         // vector that contains the centre coordinate of the finder patterns
@@ -309,30 +377,45 @@ impl QRData {
             for y in 0..width {
                 // check manhattan distance from current coodinate to pattern centers
                 for pattern_centre in pattern_centers.iter() {
-                    let mut x_difference: i16 = x as i16 - pattern_centre.0 as i16;
-                    x_difference = x_difference.abs();
-                    let mut y_difference: i16 = y as i16 - pattern_centre.1 as i16;
-                    y_difference = y_difference.abs();
+                    let x_difference_neg: i16 = x as i16 - pattern_centre.0 as i16;
+                    let x_difference = x_difference_neg.abs();
+                    let y_difference_neg: i16 = y as i16 - pattern_centre.1 as i16;
+                    let y_difference = y_difference_neg.abs();
                     // make shure that the current position is within the pattern
-                    if x_difference < 4 && y_difference < 4 {
-                        match x_difference {
-                            0..2 => self.output_data[x][y] = SymbolStatus::LogicalTrue,
-                            2 => match y_difference {
-                                0..3 => self.output_data[x][y] = SymbolStatus::LogicalFalse,
-                                3 => self.output_data[x][y] = SymbolStatus::LogicalTrue,
-                                _ => {
-                                    eprintln!("invalid y_difference {}", y_difference);
-                                    panic!()
-                                }
-                            },
-                            3 => self.output_data[x][y] = SymbolStatus::LogicalTrue,
-                            _ => {
-                                eprintln!("invalid x_difference {}", x_difference);
-                                panic!()
-                            }
-                        }
+                    if x_difference < 4
+                        && y_difference < 4
+                        && self.role_data[x][y] == SymbolRole::Uninitialised
+                    {
+                        self.output_data[x][y] = pattern[(x_difference_neg + 3) as usize]
+                            [(y_difference_neg + 3) as usize];
                         self.role_data[x][y] = SymbolRole::FinderPattern;
                     }
+                }
+            }
+        }
+    }
+
+    /// adding timing patterns to the code
+    pub fn timing_pattern(&mut self) {
+        // width with quiet zone
+        let width: usize = self.output_data[0].len();
+        for x in 0..width {
+            for y in 0..width {
+                if (x == 9 || y == 9) && self.role_data[x][y] == SymbolRole::Uninitialised {
+                    if x == 9 {
+                        if y % 2 == 1 {
+                            self.output_data[x][y] = SymbolStatus::LogicalTrue;
+                        } else {
+                            self.output_data[x][y] = SymbolStatus::LogicalFalse;
+                        }
+                    } else {
+                        if x % 2 == 1 {
+                            self.output_data[x][y] = SymbolStatus::LogicalTrue;
+                        } else {
+                            self.output_data[x][y] = SymbolStatus::LogicalFalse;
+                        }
+                    }
+                    self.role_data[x][y] = SymbolRole::TimingPattern;
                 }
             }
         }

@@ -12,10 +12,45 @@ pub fn qr_code(input: Settings) {
     // struct for all data
     let mut qrdata: QRData = QRData::new(input);
     // fill in everything required
+    if qrdata.get_settings().debugging {
+        println!("default initialisation of the data");
+        print!("{}", qrdata);
+    }
     qrdata.quiet_zone();
+    if qrdata.get_settings().debugging {
+        println!("drew quiet zone");
+        print!("{}", qrdata);
+    }
     qrdata.finders();
+    if qrdata.get_settings().debugging {
+        println!("drew finding patterns");
+        print!("{}", qrdata);
+    }
     qrdata.timing_pattern();
     if qrdata.get_settings().debugging {
+        println!("drew timing patterns");
         print!("{}", qrdata);
+    }
+    qrdata.separators();
+    if qrdata.get_settings().debugging {
+        println!("drew separators");
+        print!("{}", qrdata);
+    }
+    qrdata.reserve_format_information();
+    if qrdata.get_settings().debugging {
+        println!("after reserfing place for format information");
+        print!("{}", qrdata);
+    }
+    if qrdata.get_settings().debugging {
+        // additional info
+        println!(
+            "version: {}\nwidth: {}\ntext length: {}\nerror blocks:",
+            qrdata.get_version(),
+            qrdata.get_width(),
+            qrdata.get_settings().information.len()
+        );
+        for error_block in qrdata.get_error_info() {
+            println!("    {:?}", error_block);
+        }
     }
 }

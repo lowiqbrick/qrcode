@@ -1182,6 +1182,7 @@ pub fn get_error_block_info() -> Vec<(u8, u16, Vec<(ErrorLevel, Vec<ErrorBlockIn
 
 /// function that returns a tuple which contains number of alignment patterns
 /// and their centre coordinates
+#[allow(dead_code)]
 pub fn alignment_pattern_data(version: u8) -> (u8, Vec<u8>) {
     match version {
         1 => (0, vec![]),
@@ -1283,7 +1284,7 @@ fn sanitycheck_version_information() {
 fn sanity_check_alignment_pattern() {
     for version in 1..=40 {
         eprintln!("version: {}", version);
-        let version_data = alignment_pattern_data(version);
+        let version_data: (u8, Vec<u8>) = alignment_pattern_data(version);
         if version_data.1.len() >= 3 {
             if version_data.1.len() == 3 {
                 let difference = version_data.1[1] - version_data.1[0];

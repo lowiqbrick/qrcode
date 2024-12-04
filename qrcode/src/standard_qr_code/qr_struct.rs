@@ -14,6 +14,7 @@ const WHITE: &str = "\x1b[30;47m";
 const BRIGHTBLACK: &str = "\x1b[30;100m";
 const BLACK: &str = "\x1b[37;40m";
 const RED: &str = "\x1b[37;41m";
+const MAGENTA: &str = "\x1b[30;45m";
 const BRIGHTRED: &str = "\x1b[37;101m";
 const BRIGHTYELLOW: &str = "\x1b[30;103m";
 const BRIGHTBLUE: &str = "\x1b[30;104m";
@@ -166,6 +167,8 @@ pub enum SymbolRole {
     EncodingRegion,
     /// Version information; version 7 or larger
     VersionInformation,
+    /// reserving Format information for writing later
+    ReservedFormatInformation,
     /// Format Information; error correction level and mask pattern
     FormatInformation,
 }
@@ -255,12 +258,17 @@ impl QRData {
 
     /// returns the witdh
     pub fn get_width(&self) -> usize {
-        self.width
+        self.output_data[0].len()
     }
 
-    /// returns a reference to the setting
+    /// returns a reference to the settings
     pub fn get_settings(&self) -> &Settings {
         &self.settings
+    }
+
+    /// returns a reference to the error block information
+    pub fn get_error_info(&self) -> &Vec<ErrorBlockInfo> {
+        &self.error_blocks
     }
 
     // the error blocks with the Reed-Solomon encoding performed
@@ -297,9 +305,9 @@ impl QRData {
             );
         }
         // finding pattern
-        let logical_true = SymbolStatus::LogicalTrue;
-        let logical_false = SymbolStatus::LogicalFalse;
-        let pattern = vec![
+        let logical_true: SymbolStatus = SymbolStatus::LogicalTrue;
+        let logical_false: SymbolStatus = SymbolStatus::LogicalFalse;
+        let pattern: Vec<Vec<SymbolStatus>> = vec![
             vec![
                 logical_true,
                 logical_true,
@@ -395,27 +403,83 @@ impl QRData {
         }
     }
 
+    /// add separators between finder patterns and data
+    pub fn separators(&mut self) {
+        let width: usize = self.get_width();
+        for x in 0..width {
+            for y in 0..width {
+                // make shure the current position is not at the edge
+                if (x > 0) && (x < width - 1) && (y > 0) && (y < width - 1) {
+                    // make shure an finder pattern element is in direct vicinity
+                    if (self.role_data[x + 1][y] == SymbolRole::FinderPattern
+                        || self.role_data[x][y + 1] == SymbolRole::FinderPattern
+                        || self.role_data[x - 1][y] == SymbolRole::FinderPattern
+                        || self.role_data[x][y - 1] == SymbolRole::FinderPattern
+                        || self.role_data[x - 1][y - 1] == SymbolRole::FinderPattern
+                        || self.role_data[x + 1][y - 1] == SymbolRole::FinderPattern
+                        || self.role_data[x - 1][y + 1] == SymbolRole::FinderPattern)
+                        && (self.role_data[x][y] == SymbolRole::Uninitialised
+                            || self.role_data[x][y] == SymbolRole::TimingPattern)
+                    {
+                        self.output_data[x][y] = SymbolStatus::LogicalFalse;
+                        self.role_data[x][y] = SymbolRole::Separator;
+                    }
+                }
+            }
+        }
+    }
+
     /// adding timing patterns to the code
     pub fn timing_pattern(&mut self) {
         // width with quiet zone
         let width: usize = self.output_data[0].len();
         for x in 0..width {
             for y in 0..width {
-                if (x == 9 || y == 9) && self.role_data[x][y] == SymbolRole::Uninitialised {
-                    if x == 9 {
-                        if y % 2 == 1 {
+                if (x == 10 || y == 10) && self.role_data[x][y] == SymbolRole::Uninitialised {
+                    if x == 10 {
+                        if (y + 1) % 2 == 1 {
                             self.output_data[x][y] = SymbolStatus::LogicalTrue;
                         } else {
                             self.output_data[x][y] = SymbolStatus::LogicalFalse;
                         }
                     } else {
-                        if x % 2 == 1 {
+                        if (x + 1) % 2 == 1 {
                             self.output_data[x][y] = SymbolStatus::LogicalTrue;
                         } else {
                             self.output_data[x][y] = SymbolStatus::LogicalFalse;
                         }
                     }
                     self.role_data[x][y] = SymbolRole::TimingPattern;
+                }
+            }
+        }
+    }
+
+    /// reserve space for the format information so the data can be written without overwriting
+    /// the format information data
+    pub fn reserve_format_information(&mut self) {
+        let width: usize = self.get_width();
+        let max_index_width: usize = width - 1;
+        for x in 0..width {
+            for y in 0..width {
+                // make shure the current position is not at the edge
+                if (x > 0) && (x < width - 1) && (y > 0) && (y < width - 1) {
+                    // make shure an finder pattern element is in direct vicinity
+                    if (self.role_data[x + 1][y] == SymbolRole::Separator
+                        || self.role_data[x][y + 1] == SymbolRole::Separator
+                        || self.role_data[x - 1][y] == SymbolRole::Separator
+                        || self.role_data[x][y - 1] == SymbolRole::Separator
+                        || self.role_data[x - 1][y - 1] == SymbolRole::Separator
+                        || self.role_data[x + 1][y - 1] == SymbolRole::Separator
+                        || self.role_data[x - 1][y + 1] == SymbolRole::Separator)
+                        && self.role_data[x][y] == SymbolRole::Uninitialised
+                    {
+                        // make shure nothing is added "on top" and "the left side" of Separators
+                        if y != (max_index_width - 4 - 7 - 1) && x != (max_index_width - 4 - 7 - 1)
+                        {
+                            self.role_data[x][y] = SymbolRole::ReservedFormatInformation;
+                        }
+                    }
                 }
             }
         }
@@ -458,6 +522,7 @@ impl Display for QRData {
             writeln!(f, "{}AlignmentPattern{}", BRIGHTBLACK, COLORSTOP)?;
             writeln!(f, "{}TimingPattern{}", BRIGHTRED, COLORSTOP)?;
             writeln!(f, "{}Separator{}", RED, COLORSTOP)?;
+            writeln!(f, "{}ReservedFormatInformation{}", MAGENTA, COLORSTOP)?;
             writeln!(f, "{}FormatInformation{}", BRIGHTYELLOW, COLORSTOP)?;
             writeln!(f, "{}VersionInformation{}", BRIGHTCYAN, COLORSTOP)?;
             writeln!(f, "{}EncodingRegion{}", BRIGHTBLUE, COLORSTOP)?;
@@ -477,6 +542,9 @@ impl Display for QRData {
                             write!(f, "{}{}{}", BRIGHTRED, "  ", COLORSTOP)?
                         }
                         SymbolRole::Separator => write!(f, "{}{}{}", RED, "  ", COLORSTOP)?,
+                        SymbolRole::ReservedFormatInformation => {
+                            write!(f, "{}{}{}", MAGENTA, "  ", COLORSTOP)?
+                        }
                         SymbolRole::FormatInformation => {
                             write!(f, "{}{}{}", BRIGHTYELLOW, "  ", COLORSTOP)?
                         }
@@ -490,16 +558,6 @@ impl Display for QRData {
                 }
                 // don't forget the newlines
                 write!(f, "{}", "\n")?;
-            }
-            // additional info
-            println!(
-                "version: {}\nwidth: {}\ntext length: {}\nerror blocks:",
-                self.version,
-                self.width,
-                self.settings.information.len()
-            );
-            for error_block in self.error_blocks.clone() {
-                writeln!(f, "    {:?}", error_block)?;
             }
         }
         // end

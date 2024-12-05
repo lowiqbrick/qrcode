@@ -565,6 +565,35 @@ impl QRData {
             }
         }
     }
+
+    /// reserve version information
+    pub fn reserve_version_information(&mut self) {
+        // version information exists only in version 7 and up
+        if self.version >= 7 {
+            let width: usize = self.get_width();
+            for x in 0..width {
+                for y in 0..width {
+                    // draw in bottom left
+                    if x >= 4
+                        && x <= 9
+                        && (y <= (width - 4 - 7 - 1))
+                        && (y >= (width - 4 - 7 - 1 - 3))
+                        && self.role_data[x][y] != SymbolRole::Separator
+                    {
+                        self.role_data[x][y] = SymbolRole::ReservedVersionInformation;
+                    }
+                    if (x <= (width - 4 - 7 - 1))
+                        && (x >= (width - 4 - 7 - 1 - 3))
+                        && y >= 4
+                        && y <= 9
+                        && self.role_data[x][y] != SymbolRole::Separator
+                    {
+                        self.role_data[x][y] = SymbolRole::ReservedVersionInformation;
+                    }
+                }
+            }
+        }
+    }
 }
 
 impl Display for QRData {

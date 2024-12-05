@@ -41,6 +41,11 @@ pub fn qr_code(input: Settings) {
         println!("after reserfing place for format information");
         print!("{}", qrdata);
     }
+    qrdata.draw_alignment_pattern();
+    if qrdata.get_settings().debugging {
+        println!("after reserfing place for format information");
+        print!("{}", qrdata);
+    }
     if qrdata.get_settings().debugging {
         // additional info
         println!(

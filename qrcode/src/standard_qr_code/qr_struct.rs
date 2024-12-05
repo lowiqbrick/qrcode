@@ -1,3 +1,4 @@
+use crate::standard_qr_code::version_constants::alignment_pattern_data;
 use crate::{standard_qr_code::utils::get_verison_info, Settings};
 use std::fmt::{Display, Formatter, Result};
 
@@ -18,6 +19,7 @@ const MAGENTA: &str = "\x1b[30;45m";
 const BRIGHTRED: &str = "\x1b[37;101m";
 const BRIGHTYELLOW: &str = "\x1b[30;103m";
 const BRIGHTBLUE: &str = "\x1b[30;104m";
+const BLUE: &str = "\x1b[37;44m";
 const BRIGHTCYAN: &str = "\x1b[30;106m";
 
 /// constant for byte mode indicator
@@ -165,6 +167,8 @@ pub enum SymbolRole {
     AlignmentPattern,
     /// Encoding region; acual data
     EncodingRegion,
+    /// reserving Version Information for writing later
+    ReservedVersionInformation,
     /// Version information; version 7 or larger
     VersionInformation,
     /// reserving Format information for writing later
@@ -484,6 +488,83 @@ impl QRData {
             }
         }
     }
+
+    /// draw alignment pattern into qr code
+    pub fn draw_alignment_pattern(&mut self) {
+        let width: usize = self.get_width();
+        let logical_true: SymbolStatus = SymbolStatus::LogicalTrue;
+        let logical_false: SymbolStatus = SymbolStatus::LogicalFalse;
+        let alignment_pattern: Vec<Vec<SymbolStatus>> = vec![
+            vec![
+                logical_true,
+                logical_true,
+                logical_true,
+                logical_true,
+                logical_true,
+            ],
+            vec![
+                logical_true,
+                logical_false,
+                logical_false,
+                logical_false,
+                logical_true,
+            ],
+            vec![
+                logical_true,
+                logical_false,
+                logical_true,
+                logical_false,
+                logical_true,
+            ],
+            vec![
+                logical_true,
+                logical_false,
+                logical_false,
+                logical_false,
+                logical_true,
+            ],
+            vec![
+                logical_true,
+                logical_true,
+                logical_true,
+                logical_true,
+                logical_true,
+            ],
+        ];
+        let mut alignment_information: (u8, Vec<u8>) = alignment_pattern_data(self.version);
+        // increase the centres of the alignment patterns by four to compensate for the quiet zone
+        // in the indices
+        for alignment_centre in alignment_information.1.iter_mut() {
+            *alignment_centre += 4;
+        }
+        // first and last element of the alignment centres to avoid drawing into finder patterns
+        let lower_end: u8 = alignment_information.1[0];
+        let upper_end: u8 = alignment_information.1[alignment_information.1.len() - 1];
+        println!("alignment lower: {} upper: {}", lower_end, upper_end);
+        // go over all qr code elements
+        for x in 0..width {
+            for y in 0..width {
+                // go over all rq code elements
+                for x_align in alignment_information.1.iter() {
+                    for y_align in alignment_information.1.iter() {
+                        // don't draw on finder patterns
+                        if !((*x_align == lower_end && *y_align == lower_end)
+                            || (*x_align == upper_end && *y_align == lower_end)
+                            || (*x_align == lower_end && *y_align == upper_end))
+                        {
+                            let x_diff: i32 = *x_align as i32 - x as i32;
+                            let y_diff: i32 = *y_align as i32 - y as i32;
+                            if (x_diff <= 2 && x_diff >= -2) && (y_diff <= 2 && y_diff >= -2) {
+                                self.output_data[x][y] =
+                                    alignment_pattern[(x_diff + 2) as usize][(y_diff + 2) as usize];
+                                self.role_data[x][y] = SymbolRole::AlignmentPattern;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 impl Display for QRData {
@@ -524,6 +605,7 @@ impl Display for QRData {
             writeln!(f, "{}Separator{}", RED, COLORSTOP)?;
             writeln!(f, "{}ReservedFormatInformation{}", MAGENTA, COLORSTOP)?;
             writeln!(f, "{}FormatInformation{}", BRIGHTYELLOW, COLORSTOP)?;
+            writeln!(f, "{}ReservedVersionInformation{}", BLUE, COLORSTOP)?;
             writeln!(f, "{}VersionInformation{}", BRIGHTCYAN, COLORSTOP)?;
             writeln!(f, "{}EncodingRegion{}", BRIGHTBLUE, COLORSTOP)?;
             for row in 0..self.role_data.len() {
@@ -547,6 +629,9 @@ impl Display for QRData {
                         }
                         SymbolRole::FormatInformation => {
                             write!(f, "{}{}{}", BRIGHTYELLOW, "  ", COLORSTOP)?
+                        }
+                        SymbolRole::ReservedVersionInformation => {
+                            write!(f, "{}{}{}", BLUE, "  ", COLORSTOP)?
                         }
                         SymbolRole::VersionInformation => {
                             write!(f, "{}{}{}", BRIGHTCYAN, "  ", COLORSTOP)?

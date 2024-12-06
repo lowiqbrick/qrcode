@@ -1182,7 +1182,6 @@ pub fn get_error_block_info() -> Vec<(u8, u16, Vec<(ErrorLevel, Vec<ErrorBlockIn
 
 /// function that returns a tuple which contains number of alignment patterns
 /// and their centre coordinates
-#[allow(dead_code)]
 pub fn alignment_pattern_data(version: u8) -> (u8, Vec<u8>) {
     match version {
         1 => (0, vec![]),

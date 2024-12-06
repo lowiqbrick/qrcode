@@ -48,7 +48,6 @@ pub fn get_verison_info(
 }
 
 /// takes a version number and returns the amount of bits in the character code indicator
-#[allow(dead_code)]
 pub fn num_bits_character_code_indicator(version: u8) -> u8 {
     match version {
         1..=9 => return 8,

@@ -51,6 +51,8 @@ pub fn qr_code(input: Settings) {
         println!("after reserfing place for format information");
         print!("{}", qrdata);
     }
+    // after all preparations are done process and write the data
+    qrdata.read_and_write();
     if qrdata.get_settings().debugging {
         // additional info
         println!(

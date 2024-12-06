@@ -46,7 +46,6 @@ struct Polynomial {
 }
 
 impl Polynomial {
-    #[allow(dead_code)]
     fn new(function: Vec<Indeterminate>) -> Polynomial {
         let mut mutable_function = function;
         // sort the polynomial

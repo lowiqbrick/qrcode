@@ -23,12 +23,11 @@ const BLUE: &str = "\x1b[37;44m";
 const BRIGHTCYAN: &str = "\x1b[30;106m";
 
 /// constant for byte mode indicator
-#[allow(dead_code)]
 const BYTEMODEINDICATOR: u8 = 0b0100;
+const CHARACTERBITS: u8 = 8;
 
 /// supports writing u8 values bitwise in a vector
 #[derive(Clone, Debug)]
-#[allow(dead_code)]
 struct MyBitVector {
     /// holds the max size of bytes this struct holds
     capacity: u16,
@@ -38,19 +37,42 @@ struct MyBitVector {
     data: Vec<u8>,
 }
 
-#[allow(dead_code)]
 impl MyBitVector {
     /// generates new struct with max_size bytes
     fn new_with_capacity(max_size: u16) -> MyBitVector {
+        // fill vector with zeroes
+        let mut zero_vec: Vec<u8> = Vec::with_capacity(max_size as usize);
+        for _index in 0..max_size {
+            zero_vec.push(0);
+            // if (_index != 0) && (_index % 10 == 0) {
+            //     println!("wrote 10 zeroes");
+            // }
+        }
+        // println!(
+        //     "new capacity has length {}; max size: {}",
+        //     zero_vec.len(),
+        //     max_size
+        // );
         MyBitVector {
             capacity: max_size,
             curr_position: 0,
-            data: Vec::with_capacity(max_size as usize),
+            data: zero_vec,
         }
     }
 
     /// writes size bits of value into MyBitVector
     fn push(&mut self, value: u8, size: u8) {
+        // check whether the data fits into the vector
+        if self.capacity as u32 * 8 < (self.curr_position + size as u32) {
+            eprintln!(
+                "MyBitVector has capacity of {} bits is at index {} and as a \
+                result {} additional bits can't be written",
+                self.capacity * 8,
+                self.curr_position,
+                size
+            );
+            panic!();
+        }
         // which bit should be read from
         let mut current_bit_read: u8 = size - 1;
         for index in self.curr_position..self.curr_position + size as u32 {
@@ -82,10 +104,6 @@ impl MyBitVector {
             let byte_index: u16 = (self.curr_position as f32 / 8.0) as u16;
             // println!("{}: {}", byte_index, self.capacity);
             assert!(byte_index < self.capacity);
-            // extend the vector if a new byte should be written to
-            if current_bit_write == 7 {
-                self.data.push(0);
-            }
             match current_bit_write {
                 0 => {
                     self.data[byte_index as usize] = self.data[byte_index as usize] | current_bit;
@@ -120,25 +138,14 @@ impl MyBitVector {
                 }
                 _ => panic!("attempted to write to bit {} in u8", current_bit_write),
             }
-            println!(
-                "read value {} from bit {} and wrote it to bit {}",
-                current_bit,
-                current_bit_read + 1,
-                current_bit_write
-            );
             // update the byte index
             self.curr_position += 1;
         }
-    }
-
-    fn get_data(&self) -> Vec<u8> {
-        self.data.clone()
     }
 }
 
 /// represents the qr code symbols statuses, which are uninitialised, true false
 #[derive(Debug, Clone, Copy)]
-#[allow(dead_code)]
 
 pub enum SymbolStatus {
     /// white symbol in qr code; false
@@ -151,7 +158,6 @@ pub enum SymbolStatus {
 
 /// represents the role of symbol inside the qr code
 #[derive(Debug, PartialEq)]
-#[allow(dead_code)]
 pub enum SymbolRole {
     /// role not get determined
     Uninitialised,
@@ -179,7 +185,6 @@ pub enum SymbolRole {
 
 /// contains error correction block information
 #[derive(Clone, Copy, Debug)]
-#[allow(dead_code)]
 pub struct ErrorBlockInfo {
     /// amount of this block in this version
     pub num_block: u8,
@@ -204,7 +209,6 @@ impl ErrorBlockInfo {
 
 /// encomposes all data required to generate a qr code
 #[derive(Debug)]
-#[allow(dead_code)]
 pub struct QRData {
     output_data: Vec<Vec<SymbolStatus>>,
     role_data: Vec<Vec<SymbolRole>>,
@@ -214,7 +218,6 @@ pub struct QRData {
     settings: Settings,
 }
 
-#[allow(dead_code)]
 impl QRData {
     /// generate the data
     pub fn new(input: Settings) -> QRData {
@@ -273,17 +276,6 @@ impl QRData {
     /// returns a reference to the error block information
     pub fn get_error_info(&self) -> &Vec<ErrorBlockInfo> {
         &self.error_blocks
-    }
-
-    // the error blocks with the Reed-Solomon encoding performed
-    #[allow(dead_code)]
-    pub fn get_raw_bitvectors(&self) -> Vec<Vec<u8>> {
-        let result_blocks: Vec<Vec<u8>> = vec![];
-        let _text: String = self.settings.information.clone();
-        let _char_index: u8 = 0;
-        // go throught all error blocks
-        for _error_block in self.error_blocks.clone().into_iter() {}
-        result_blocks
     }
 
     // draws the quiet zone around the code
@@ -593,6 +585,72 @@ impl QRData {
                 }
             }
         }
+    }
+
+    /// reads the text from self.settings and write it into the qr code
+    pub fn read_and_write(&mut self) {
+        let width: usize = self.get_width();
+        let max_index: usize = width - 1;
+        // get the data
+        let data: String = self.settings.information.clone();
+        // get info on the error blocks
+        let error_blocks: Vec<ErrorBlockInfo> = self.error_blocks.clone();
+        // println!("error blocks: {:?}", error_blocks);
+        // create vector to contain the errorblock data
+        let mut all_blocks: Vec<Vec<u8>> = vec![];
+        for block in error_blocks.iter() {
+            for _ in 0..block.num_block {
+                all_blocks.push(vec![]);
+            }
+        }
+
+        // write all data into the error block vector
+        // create MyBitVectors to write data into
+        let mut bit_vectors: Vec<MyBitVector> = vec![];
+        for block in error_blocks.iter() {
+            for _ in 0..block.num_block {
+                // println!("num data bytes: {}", block.num_data_bytes);
+                bit_vectors.push(MyBitVector::new_with_capacity(block.num_data_bytes.into()));
+            }
+        }
+        // println!("bit vectors: {:?}", bit_vectors);
+        // write mode bits into data
+        assert!(bit_vectors.len() >= 1);
+        let mut bit_vector_index: usize = 0;
+        bit_vectors[bit_vector_index].push(BYTEMODEINDICATOR, 4);
+        for char in data.chars() {
+            // get index and size of MyBitVector
+            let vector_index: u32 = bit_vectors[bit_vector_index].curr_position;
+            let vector_capacity: u16 = bit_vectors[bit_vector_index].capacity * 8;
+            // check if entire char can be written into MyBitVector
+            let remaining_capacity: u32 = vector_capacity as u32 - vector_index;
+            if remaining_capacity >= CHARACTERBITS as u32 {
+                bit_vectors[bit_vector_index].push(char as u8, CHARACTERBITS);
+            } else {
+                if remaining_capacity == 4 {
+                    // write what fits into vector
+                    bit_vectors[bit_vector_index]
+                        .push(char as u8 & 0b1111_0000, remaining_capacity as u8);
+                    // increase index
+                    bit_vector_index += 1;
+                    // println!(
+                    //     "increased vector index from {} to {}",
+                    //     bit_vector_index - 1,
+                    //     bit_vector_index
+                    // );
+                    assert!(bit_vector_index < bit_vectors.len());
+                    bit_vectors[bit_vector_index]
+                        .push(char as u8 & 0b0000_1111, remaining_capacity as u8);
+                } else {
+                    panic!("remaining capacity wasn't 4, but {}", remaining_capacity);
+                }
+            }
+        }
+        println!(
+            "bit vectors (len {}): {:?}",
+            bit_vectors[0].data.len(),
+            bit_vectors
+        );
     }
 }
 

@@ -1,9 +1,11 @@
+use std::convert::From;
 use std::fmt::{Display, Formatter, Result};
 use std::ops::{Add, Div, Mul, Sub};
+use std::vec;
 
 /// structure that represents an indetermiante as coefficient*x^degree
 #[derive(Clone, Copy, PartialEq, Debug)]
-struct Indeterminate {
+pub struct Indeterminate {
     /// factor in front pof the indeterminate
     coefficient: i16,
     /// the 'to the power of' factor
@@ -11,7 +13,7 @@ struct Indeterminate {
 }
 
 impl Indeterminate {
-    fn new(coefficient: i16, degree: i16) -> Indeterminate {
+    pub fn new(coefficient: i16, degree: i16) -> Indeterminate {
         Indeterminate {
             coefficient,
             degree,
@@ -41,12 +43,12 @@ impl Mul for Indeterminate {
 /// combines the indeterminates together into a polynomial for more
 /// advanced maths operations
 #[derive(Clone, PartialEq, Debug)]
-struct Polynomial {
+pub struct Polynomial {
     function: Vec<Indeterminate>,
 }
 
 impl Polynomial {
-    fn new(function: Vec<Indeterminate>) -> Polynomial {
+    pub fn new(function: Vec<Indeterminate>) -> Polynomial {
         let mut mutable_function = function;
         // sort the polynomial
         mutable_function.sort_by_key(|indet_struct| indet_struct.degree);
@@ -59,7 +61,7 @@ impl Polynomial {
 
     /// method to reduce/make the polynomial look good
     /// (indeterminates get sorted from highest power degree to lowest)
-    fn reduce(&mut self) -> Polynomial {
+    pub fn reduce(&mut self) -> Polynomial {
         // vector to collect all degrees
         let mut degrees: Vec<i16> = vec![];
         for x in self.function.iter() {
@@ -103,6 +105,10 @@ impl Polynomial {
         }
         self.function = catch_zero_coefficients.clone();
         Polynomial { function: result }
+    }
+
+    pub fn push(&mut self, element: Indeterminate) {
+        self.function.push(element);
     }
 }
 
@@ -265,6 +271,32 @@ impl Div for Polynomial {
             highest_poly_divident -= 1;
             assert!(highest_poly_divident >= 0);
         }
+    }
+}
+
+impl From<Vec<u8>> for Polynomial {
+    fn from(item: Vec<u8>) -> Polynomial {
+        let mut degree: usize = item.len();
+        let mut result: Polynomial = Polynomial::new(vec![]);
+        for element in item.iter() {
+            degree -= 1;
+            result
+                .function
+                .push(Indeterminate::new(*element as i16, (degree) as i16));
+        }
+        result
+    }
+}
+
+impl From<Polynomial> for Vec<u8> {
+    fn from(item: Polynomial) -> Vec<u8> {
+        let mut return_vec: Vec<u8> = vec![];
+        let item_copy: Polynomial = item.clone().reduce();
+        for var in item_copy.function.iter() {
+            assert!(var.coefficient >= 0);
+            return_vec.push(var.coefficient as u8);
+        }
+        return_vec
     }
 }
 
@@ -433,5 +465,18 @@ mod tests {
             a_b_term,
             Polynomial::new(vec![Indeterminate::new(-37, 1), Indeterminate::new(30, 0)])
         );
+    }
+
+    #[test]
+    fn conversion_vecu8_poly() {
+        use super::Polynomial;
+        let test_vec: Vec<u8> = vec![102, 51, 1, 3];
+        let to_poly: Polynomial = Polynomial::from(test_vec.clone());
+        let back_to_vec: Vec<u8> = Vec::from(to_poly.clone());
+        println!(
+            "vector {:?} after converison {} and {:?} again",
+            test_vec, to_poly, back_to_vec
+        );
+        assert!(test_vec == back_to_vec)
     }
 }

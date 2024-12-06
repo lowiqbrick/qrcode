@@ -1,3 +1,4 @@
+use crate::polynomials::{Indeterminate, Polynomial};
 use crate::standard_qr_code::version_constants::alignment_pattern_data;
 use crate::{standard_qr_code::utils::get_verison_info, Settings};
 use std::fmt::{Display, Formatter, Result};
@@ -141,6 +142,10 @@ impl MyBitVector {
             // update the byte index
             self.curr_position += 1;
         }
+    }
+
+    fn get_data(&self) -> Vec<u8> {
+        self.data.clone()
     }
 }
 
@@ -655,11 +660,43 @@ impl QRData {
                 }
             }
         }
-        println!(
-            "bit vectors (len {}): {:?}",
-            bit_vectors[0].data.len(),
-            bit_vectors
-        );
+        assert!(all_blocks.len() == bit_vectors.len());
+        // convert the datavectors, so that they
+        // go through all blocks
+        let mut vector_index: u8 = 0;
+        for block in error_blocks.iter() {
+            // go through all block repetitions
+            for _ in 0..block.num_block {
+                // go through all data vectors
+                let raw_polynomial: Polynomial =
+                    Polynomial::from(bit_vectors[vector_index as usize].get_data());
+                let difference_degree: u8 = block.num_error_bytes;
+                let mut divisor: Polynomial = Polynomial::new(vec![Indeterminate::new(1, 1)])
+                    * Polynomial::new(vec![Indeterminate::new(-1, 0)]);
+                // build (x - 1) * (x - 2) * ...
+                for degree in 2..difference_degree + 1 {
+                    divisor = divisor
+                        * Polynomial::new(vec![
+                            Indeterminate::new(1, 1),
+                            Indeterminate::new((degree as i16 * -1) as i16, 0),
+                        ]);
+                    println!(
+                        "{} and divisor {}",
+                        Polynomial::new(vec![
+                            Indeterminate::new(1, 1),
+                            Indeterminate::new((degree as i16 * -1) as i16, 0),
+                        ]),
+                        divisor
+                    );
+                }
+                vector_index += 1;
+            }
+        }
+        // println!(
+        //     "bit vectors (len {}): {:?}",
+        //     bit_vectors[0].data.len(),
+        //     bit_vectors
+        // );
     }
 }
 

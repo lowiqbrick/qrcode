@@ -12,16 +12,21 @@ pub fn get_verison_info(
     error_level: ErrorLevel,
 ) -> Result<(u8, Vec<ErrorBlockInfo>), String> {
     // increase the text length by one to account for the QR code symbols
-    let text_length_complete: usize = text_length + 1;
+    // and a 1 byte character count indicator
+    let text_length_complete: usize = text_length + 2;
     // check the length of the text for being to long
     if text_length_complete > (3706 - 750) {
         eprintln!("text is way to long for a qr code; biggest possible is 2956 characters");
         panic!();
     }
-    let search_length: u16 = text_length_complete as u16;
+    let mut search_length: u16 = text_length_complete as u16;
     let all_info: Vec<(u8, u16, Vec<(ErrorLevel, Vec<ErrorBlockInfo>)>)> = get_error_block_info();
     // look for the fitting version
     for version in all_info {
+        // when the version is 10 or higher the character count indicator has a length of 2 bytes
+        if version.0 == 10 {
+            search_length += 1;
+        }
         // does this one potentally fit the text
         if search_length <= version.1 {
             // does the error level fit the text

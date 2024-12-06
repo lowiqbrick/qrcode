@@ -61,7 +61,7 @@ impl MyBitVector {
     }
 
     /// writes size bits of value into MyBitVector
-    fn push(&mut self, value: u8, size: u8, start_left: bool) {
+    fn push(&mut self, value: u8, size: u8) {
         // check whether the data fits into the vector
         if self.capacity as u32 * 8 < (self.curr_position + size as u32) {
             eprintln!(
@@ -74,12 +74,7 @@ impl MyBitVector {
             panic!();
         }
         // which bit should be read from
-        let mut current_bit_read: u8;
-        if start_left {
-            current_bit_read = 7;
-        } else {
-            current_bit_read = size - 1
-        }
+        let mut current_bit_read: u8 = size - 1;
         for index in self.curr_position..self.curr_position + size as u32 {
             // println!("read bit {}", current_bit_read);
             assert!(current_bit_read < 8);
@@ -622,7 +617,16 @@ impl QRData {
         // write mode bits into data
         assert!(bit_vectors.len() >= 1);
         let mut bit_vector_index: usize = 0;
-        bit_vectors[bit_vector_index].push(BYTEMODEINDICATOR, 4, false);
+        // add byte mode indicator (for byte mode)
+        bit_vectors[bit_vector_index].push(BYTEMODEINDICATOR, 4);
+        // add character count indicator
+        let len_text: usize = data.len();
+        if self.version >= 10 {
+            bit_vectors[bit_vector_index].push(((len_text & 0b1111_1111_0000_0000) >> 8) as u8, 8);
+            bit_vectors[bit_vector_index].push((len_text & 0b0000_0000_1111_1111) as u8, 8);
+        } else {
+            bit_vectors[bit_vector_index].push((len_text & 0b1111_1111) as u8, 8);
+        }
         for char in data.chars() {
             // get index and size of MyBitVector
             let vector_index: u32 = bit_vectors[bit_vector_index].curr_position;
@@ -630,15 +634,12 @@ impl QRData {
             // check if entire char can be written into MyBitVector
             let remaining_capacity: u32 = vector_capacity as u32 - vector_index;
             if remaining_capacity >= CHARACTERBITS as u32 {
-                bit_vectors[bit_vector_index].push(char as u8, CHARACTERBITS, false);
+                bit_vectors[bit_vector_index].push(char as u8, CHARACTERBITS);
             } else {
                 if remaining_capacity == 4 {
                     // write what fits into vector
-                    bit_vectors[bit_vector_index].push(
-                        char as u8 & 0b1111_0000,
-                        remaining_capacity as u8,
-                        true,
-                    );
+                    bit_vectors[bit_vector_index]
+                        .push((char as u8 & 0b1111_0000) >> 4, remaining_capacity as u8);
                     // increase index
                     bit_vector_index += 1;
                     // println!(
@@ -647,11 +648,8 @@ impl QRData {
                     //     bit_vector_index
                     // );
                     assert!(bit_vector_index < bit_vectors.len());
-                    bit_vectors[bit_vector_index].push(
-                        char as u8 & 0b0000_1111,
-                        remaining_capacity as u8,
-                        false,
-                    );
+                    bit_vectors[bit_vector_index]
+                        .push(char as u8 & 0b0000_1111, remaining_capacity as u8);
                 } else {
                     panic!("remaining capacity wasn't 4, but {}", remaining_capacity);
                 }
@@ -754,8 +752,8 @@ mod tests {
     fn test_my_vect() {
         use super::MyBitVector;
         let mut test_vec: MyBitVector = MyBitVector::new_with_capacity(2);
-        test_vec.push(0b0000_0100, 4, false);
-        test_vec.push(0b0101_0101, 8, false);
+        test_vec.push(0b0000_0100, 4);
+        test_vec.push(0b0101_0101, 8);
         println!(
             "created: {:?}: {:?}",
             test_vec.data,

@@ -36,7 +36,10 @@ impl Display for Indeterminate {
 impl Mul for Indeterminate {
     type Output = Indeterminate;
     fn mul(self, rhs: Self) -> Self::Output {
-        Indeterminate::new(self.coefficient * rhs.coefficient, self.degree + rhs.degree)
+        Indeterminate::new(
+            ((self.coefficient as i16 * rhs.coefficient as i16) % 256) as i8,
+            self.degree + rhs.degree,
+        )
     }
 }
 
@@ -49,7 +52,7 @@ pub struct Polynomial {
 
 impl Polynomial {
     pub fn new(function: Vec<Indeterminate>) -> Polynomial {
-        let mut mutable_function = function;
+        let mut mutable_function: Vec<Indeterminate> = function;
         // sort the polynomial
         mutable_function.sort_by_key(|indet_struct| indet_struct.degree);
         // create new reduced polynomial
@@ -89,7 +92,8 @@ impl Polynomial {
             let mut degree_coefficient: i8 = 0;
             for z in self.function.iter() {
                 if *degree == z.degree {
-                    degree_coefficient += z.coefficient;
+                    degree_coefficient =
+                        ((degree_coefficient as i16 + z.coefficient as i16) % 256) as i8;
                 }
             }
             result.push(Indeterminate::new(degree_coefficient, *degree));
@@ -164,7 +168,8 @@ impl Sub for Polynomial {
         // adding them to the polynomial
         for indeterminate in rhs.function.iter() {
             let mut intermediate_help: Indeterminate = *indeterminate;
-            intermediate_help.coefficient = indeterminate.coefficient * -1;
+            intermediate_help.coefficient =
+                ((indeterminate.coefficient as i16 * -1 as i16) % 256) as i8;
             help_vector.push(intermediate_help);
         }
         // return the result

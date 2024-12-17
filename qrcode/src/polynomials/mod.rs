@@ -7,13 +7,13 @@ use std::vec;
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Indeterminate {
     /// factor in front pof the indeterminate
-    coefficient: i16,
+    coefficient: i8,
     /// the 'to the power of' factor
     degree: i16,
 }
 
 impl Indeterminate {
-    pub fn new(coefficient: i16, degree: i16) -> Indeterminate {
+    pub fn new(coefficient: i8, degree: i16) -> Indeterminate {
         Indeterminate {
             coefficient,
             degree,
@@ -86,7 +86,7 @@ impl Polynomial {
         // and save them in a new vector
         let mut result: Vec<Indeterminate> = vec![];
         for degree in degrees.iter() {
-            let mut degree_coefficient: i16 = 0;
+            let mut degree_coefficient: i8 = 0;
             for z in self.function.iter() {
                 if *degree == z.degree {
                     degree_coefficient += z.coefficient;
@@ -231,23 +231,23 @@ impl Div for Polynomial {
         // make shure all is sorted
         let divisor: Polynomial = help.reduce().clone();
         let mut working_dividend: Polynomial = self.clone().reduce();
-        let coefficient_divisor: i16 = divisor.function[0].coefficient;
+        let coefficient_divisor: i8 = divisor.function[0].coefficient;
         let degree_divisor: i16 = divisor.function[0].degree;
         // keep track of number of loops and abort if necessary
         let mut highest_poly_divident: i16 = working_dividend.function[0].degree;
         loop {
             // check what the divisor needs to be multiplied by so it's highest powered term equals the
             // highest powered term of the dividend
-            let coefficient_divident: i16 = working_dividend.function[0].coefficient;
+            let coefficient_divident: i8 = working_dividend.function[0].coefficient;
             let degree_divident: i16 = working_dividend.function[0].degree;
-            let coefficient_factor: i16 = coefficient_divident / coefficient_divisor;
+            let coefficient_factor: i8 = coefficient_divident / coefficient_divisor;
             let degree_difference: i16 = degree_divident as i16 - degree_divisor as i16;
             // division complete?
             if degree_difference < 0 {
                 return Polynomial::new(quotient).reduce();
             }
             let result_part: Indeterminate =
-                Indeterminate::new(coefficient_factor, degree_difference as i16);
+                Indeterminate::new(coefficient_factor, degree_difference);
             quotient.push(result_part);
             // multiply the divisor by an indeterminate for later subtraction
             let working_divisor: Polynomial = divisor.clone() * Polynomial::new(vec![result_part]);
@@ -274,27 +274,27 @@ impl Div for Polynomial {
     }
 }
 
-impl From<Vec<u8>> for Polynomial {
-    fn from(item: Vec<u8>) -> Polynomial {
+impl From<Vec<i8>> for Polynomial {
+    fn from(item: Vec<i8>) -> Polynomial {
         let mut degree: usize = item.len();
         let mut result: Polynomial = Polynomial::new(vec![]);
         for element in item.iter() {
             degree -= 1;
             result
                 .function
-                .push(Indeterminate::new(*element as i16, (degree) as i16));
+                .push(Indeterminate::new(*element, (degree) as i16));
         }
         result
     }
 }
 
-impl From<Polynomial> for Vec<u8> {
-    fn from(item: Polynomial) -> Vec<u8> {
-        let mut return_vec: Vec<u8> = vec![];
+impl From<Polynomial> for Vec<i8> {
+    fn from(item: Polynomial) -> Vec<i8> {
+        let mut return_vec: Vec<i8> = vec![];
         let item_copy: Polynomial = item.clone().reduce();
         for var in item_copy.function.iter() {
             assert!(var.coefficient >= 0);
-            return_vec.push(var.coefficient as u8);
+            return_vec.push(var.coefficient as i8);
         }
         return_vec
     }
@@ -470,9 +470,9 @@ mod tests {
     #[test]
     fn conversion_vecu8_poly() {
         use super::Polynomial;
-        let test_vec: Vec<u8> = vec![102, 51, 1, 3];
+        let test_vec: Vec<i8> = vec![102, 51, 1, 3];
         let to_poly: Polynomial = Polynomial::from(test_vec.clone());
-        let back_to_vec: Vec<u8> = Vec::from(to_poly.clone());
+        let back_to_vec: Vec<i8> = Vec::from(to_poly.clone());
         println!(
             "vector {:?} after converison {} and {:?} again",
             test_vec, to_poly, back_to_vec

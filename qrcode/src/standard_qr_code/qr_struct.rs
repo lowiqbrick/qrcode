@@ -24,7 +24,7 @@ const BLUE: &str = "\x1b[37;44m";
 const BRIGHTCYAN: &str = "\x1b[30;106m";
 
 /// constant for byte mode indicator
-const BYTEMODEINDICATOR: u8 = 0b0100;
+const BYTEMODEINDICATOR: i8 = 0b0100;
 const CHARACTERBITS: u8 = 8;
 
 /// supports writing u8 values bitwise in a vector
@@ -35,14 +35,14 @@ struct MyBitVector {
     /// holds the current bit that will be written to next
     curr_position: u32,
     // the actual data
-    data: Vec<u8>,
+    data: Vec<i8>,
 }
 
 impl MyBitVector {
     /// generates new struct with max_size bytes
     fn new_with_capacity(max_size: u16) -> MyBitVector {
         // fill vector with zeroes
-        let mut zero_vec: Vec<u8> = Vec::with_capacity(max_size as usize);
+        let mut zero_vec: Vec<i8> = Vec::with_capacity(max_size as usize);
         for _index in 0..max_size {
             zero_vec.push(0);
             // if (_index != 0) && (_index % 10 == 0) {
@@ -62,7 +62,7 @@ impl MyBitVector {
     }
 
     /// writes size bits of value into MyBitVector
-    fn push(&mut self, value: u8, size: u8) {
+    fn push(&mut self, value: i8, size: u8) {
         // check whether the data fits into the vector
         if self.capacity as u32 * 8 < (self.curr_position + size as u32) {
             eprintln!(
@@ -79,7 +79,7 @@ impl MyBitVector {
         for index in self.curr_position..self.curr_position + size as u32 {
             // println!("read bit {}", current_bit_read);
             assert!(current_bit_read < 8);
-            let current_bit: u8;
+            let current_bit: i8;
             // get the value of the bit in question
             current_bit = match current_bit_read {
                 0 => value & 0b0000_0001,
@@ -89,7 +89,7 @@ impl MyBitVector {
                 4 => (value & 0b0001_0000) >> 4,
                 5 => (value & 0b0010_0000) >> 5,
                 6 => (value & 0b0100_0000) >> 6,
-                7 => (value & 0b1000_0000) >> 7,
+                7 => (value & 0b1000_0000u8 as i8) >> 7,
                 _ => {
                     panic!("tried to read bit {} of an u8", current_bit_read);
                 }
@@ -144,7 +144,7 @@ impl MyBitVector {
         }
     }
 
-    fn get_data(&self) -> Vec<u8> {
+    fn get_data(&self) -> Vec<i8> {
         self.data.clone()
     }
 }
@@ -627,10 +627,10 @@ impl QRData {
         // add character count indicator
         let len_text: usize = data.len();
         if self.version >= 10 {
-            bit_vectors[bit_vector_index].push(((len_text & 0b1111_1111_0000_0000) >> 8) as u8, 8);
-            bit_vectors[bit_vector_index].push((len_text & 0b0000_0000_1111_1111) as u8, 8);
+            bit_vectors[bit_vector_index].push(((len_text & 0b1111_1111_0000_0000) >> 8) as i8, 8);
+            bit_vectors[bit_vector_index].push((len_text & 0b0000_0000_1111_1111) as i8, 8);
         } else {
-            bit_vectors[bit_vector_index].push((len_text & 0b1111_1111) as u8, 8);
+            bit_vectors[bit_vector_index].push((len_text & 0b1111_1111) as i8, 8);
         }
         for char in data.chars() {
             // get index and size of MyBitVector
@@ -639,12 +639,14 @@ impl QRData {
             // check if entire char can be written into MyBitVector
             let remaining_capacity: u32 = vector_capacity as u32 - vector_index;
             if remaining_capacity >= CHARACTERBITS as u32 {
-                bit_vectors[bit_vector_index].push(char as u8, CHARACTERBITS);
+                bit_vectors[bit_vector_index].push(char as i8, CHARACTERBITS);
             } else {
                 if remaining_capacity == 4 {
                     // write what fits into vector
-                    bit_vectors[bit_vector_index]
-                        .push((char as u8 & 0b1111_0000) >> 4, remaining_capacity as u8);
+                    bit_vectors[bit_vector_index].push(
+                        (char as i8 & 0b1111_0000_u8 as i8) >> 4,
+                        remaining_capacity as u8,
+                    );
                     // increase index
                     bit_vector_index += 1;
                     // println!(
@@ -654,7 +656,7 @@ impl QRData {
                     // );
                     assert!(bit_vector_index < bit_vectors.len());
                     bit_vectors[bit_vector_index]
-                        .push(char as u8 & 0b0000_1111, remaining_capacity as u8);
+                        .push(char as i8 & 0b0000_1111, remaining_capacity as u8);
                 } else {
                     panic!("remaining capacity wasn't 4, but {}", remaining_capacity);
                 }
@@ -670,25 +672,16 @@ impl QRData {
                 // go through all data vectors
                 let raw_polynomial: Polynomial =
                     Polynomial::from(bit_vectors[vector_index as usize].get_data());
-                let difference_degree: u8 = block.num_error_bytes;
-                let mut divisor: Polynomial = Polynomial::new(vec![Indeterminate::new(1, 1)])
-                    * Polynomial::new(vec![Indeterminate::new(-1, 0)]);
-                // build (x - 1) * (x - 2) * ...
-                for degree in 2..difference_degree + 1 {
-                    divisor = divisor
-                        * Polynomial::new(vec![
+                let mut work_polynomial: Polynomial = raw_polynomial.clone();
+                for index in 0..block.num_error_bytes {
+                    work_polynomial = work_polynomial
+                        / Polynomial::new(vec![
                             Indeterminate::new(1, 1),
-                            Indeterminate::new((degree as i16 * -1) as i16, 0),
+                            Indeterminate::new((index as i8 + 1) * -1, 0),
                         ]);
-                    println!(
-                        "{} and divisor {}",
-                        Polynomial::new(vec![
-                            Indeterminate::new(1, 1),
-                            Indeterminate::new((degree as i16 * -1) as i16, 0),
-                        ]),
-                        divisor
-                    );
                 }
+                let quotient: Polynomial = work_polynomial.clone();
+                println!("quotient: {}", quotient);
                 vector_index += 1;
             }
         }

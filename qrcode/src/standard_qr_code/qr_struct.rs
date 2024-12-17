@@ -193,8 +193,6 @@ pub enum SymbolRole {
 pub struct ErrorBlockInfo {
     /// amount of this block in this version
     pub num_block: u8,
-    /// total length of the block
-    pub total_block_len: u8,
     /// data length in this block
     pub num_data_bytes: u8,
     /// number of error correction bytes in this block
@@ -205,7 +203,6 @@ impl ErrorBlockInfo {
     pub fn new(num_block: u8, total_block_len: u8, num_data_bytes: u8) -> ErrorBlockInfo {
         ErrorBlockInfo {
             num_block,
-            total_block_len,
             num_data_bytes,
             num_error_bytes: total_block_len - num_data_bytes,
         }
@@ -219,7 +216,6 @@ pub struct QRData {
     role_data: Vec<Vec<SymbolRole>>,
     version: u8,
     error_blocks: Vec<ErrorBlockInfo>,
-    width: usize,
     settings: Settings,
 }
 
@@ -258,7 +254,6 @@ impl QRData {
             role_data,
             version,
             error_blocks: error_blocks,
-            width,
             settings: input,
         }
     }

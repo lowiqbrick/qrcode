@@ -51,16 +51,3 @@ pub fn get_verison_info(
         Err(String::from("text length or error level invalid"));
     return_result
 }
-
-/// takes a version number and returns the amount of bits in the character code indicator
-pub fn num_bits_character_code_indicator(version: u8) -> u8 {
-    match version {
-        1..=9 => return 8,
-        10..=26 => return 16,
-        27..=40 => return 16,
-        _ => {
-            eprintln!("invlaid version number for bits in character code indicator");
-            panic!();
-        }
-    }
-}

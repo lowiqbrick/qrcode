@@ -594,8 +594,8 @@ impl QRData {
 
     /// reads the text from self.settings and write it into the qr code
     pub fn read_and_write(&mut self) {
-        let width: usize = self.get_width();
-        let max_index: usize = width - 1;
+        // let width: usize = self.get_width();
+        // let max_index: usize = width - 1;
         // get the data
         let data: String = self.settings.information.clone();
         // get info on the error blocks
@@ -618,7 +618,11 @@ impl QRData {
                 bit_vectors.push(MyBitVector::new_with_capacity(block.num_data_bytes.into()));
             }
         }
-        // println!("bit vectors: {:?}", bit_vectors);
+        // println!(
+        //     "bit vectors: {:?} (length {})",
+        //     bit_vectors,
+        //     bit_vectors.len()
+        // );
         // write mode bits into data
         assert!(bit_vectors.len() >= 1);
         let mut bit_vector_index: usize = 0;
@@ -666,30 +670,50 @@ impl QRData {
         // convert the datavectors, so that they
         // go through all blocks
         let mut vector_index: u8 = 0;
+        if self.settings.debugging {
+            // println!("individual error blocks:");
+        }
         for block in error_blocks.iter() {
             // go through all block repetitions
             for _ in 0..block.num_block {
                 // go through all data vectors
                 let raw_polynomial: Polynomial =
                     Polynomial::from(bit_vectors[vector_index as usize].get_data());
-                let mut work_polynomial: Polynomial = raw_polynomial.clone();
-                for index in 0..block.num_error_bytes {
-                    work_polynomial = work_polynomial
-                        / Polynomial::new(vec![
+                // create the divisor
+                // insert x-1 as a jumping of point
+                let mut divisor: Polynomial =
+                    Polynomial::new(vec![Indeterminate::new(1, 1), Indeterminate::new(-1, 0)]);
+                for index in 1..block.num_error_bytes {
+                    divisor = divisor
+                        * Polynomial::new(vec![
                             Indeterminate::new(1, 1),
                             Indeterminate::new((index as i8 + 1) * -1, 0),
                         ]);
                 }
-                let quotient: Polynomial = work_polynomial.clone();
-                println!("quotient: {}", quotient);
+                let g_of_x: Polynomial = (raw_polynomial
+                    * Polynomial::new(vec![Indeterminate::new(1, block.num_error_bytes as i16)]))
+                    / divisor.clone();
+                let data_final: Polynomial = g_of_x.clone() * divisor;
+                for values in data_final.clone().into_iter() {
+                    all_blocks[vector_index as usize].push(values.get_coefficient() as u8);
+                }
+                if self.settings.debugging {
+                    // println!(
+                    //     "data with error correction: {}\nas vector (len {}): {:?}",
+                    //     data_final,
+                    //     all_blocks[vector_index as usize].len(),
+                    //     all_blocks[vector_index as usize]
+                    // );
+                }
                 vector_index += 1;
             }
         }
-        // println!(
-        //     "bit vectors (len {}): {:?}",
-        //     bit_vectors[0].data.len(),
-        //     bit_vectors
-        // );
+        if self.settings.debugging {
+            println!("all values:");
+            for data_printout in all_blocks.clone().iter() {
+                println!("{:?}", data_printout);
+            }
+        }
     }
 }
 

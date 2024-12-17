@@ -19,6 +19,10 @@ impl Indeterminate {
             degree,
         }
     }
+
+    pub fn get_coefficient(&self) -> i8 {
+        self.coefficient
+    }
 }
 
 impl Display for Indeterminate {

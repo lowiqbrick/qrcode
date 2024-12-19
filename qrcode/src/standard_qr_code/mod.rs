@@ -38,21 +38,25 @@ pub fn qr_code(input: Settings) {
     }
     qrdata.reserve_format_information();
     if qrdata.get_settings().debugging {
-        println!("after reserfing place for format information");
+        println!("after reserving place for format information");
         print!("{}", qrdata);
     }
     qrdata.draw_alignment_pattern();
     if qrdata.get_settings().debugging {
-        println!("after reserfing place for format information");
+        println!("after drawing alignment patterns");
         print!("{}", qrdata);
     }
     qrdata.reserve_version_information();
     if qrdata.get_settings().debugging {
-        println!("after reserfing place for format information");
+        println!("after reserving version information");
         print!("{}", qrdata);
     }
     // after all preparations are done process and write the data
     qrdata.read_and_write();
+    if qrdata.get_settings().debugging {
+        println!("after writing the information");
+        print!("{}", qrdata);
+    }
     if qrdata.get_settings().debugging {
         // additional info
         println!(

@@ -280,7 +280,7 @@ impl QRData {
 
     // draws the quiet zone around the code
     pub fn quiet_zone(&mut self) {
-        let width = self.output_data.len();
+        let width: usize = self.output_data.len();
         for x in 0..width {
             for y in 0..width {
                 if x <= 3 || x >= width - 4 || y <= 3 || y >= width - 4 {
@@ -598,9 +598,13 @@ impl QRData {
         // println!("error blocks: {:?}", error_blocks);
         // create vector to contain the errorblock data
         let mut all_blocks: Vec<Vec<u8>> = vec![];
+        let mut tot_num_blocks: usize = 0;
+        let mut tot_num_codewords: usize = 0;
         for block in error_blocks.iter() {
             for _ in 0..block.num_block {
                 all_blocks.push(vec![]);
+                tot_num_blocks += 1;
+                tot_num_codewords += (block.num_data_bytes + block.num_error_bytes) as usize;
             }
         }
 
@@ -663,7 +667,7 @@ impl QRData {
         }
         assert!(all_blocks.len() == bit_vectors.len());
         // convert the datavectors, so that they
-        // go through all blocks
+        // also contain the error correction numbers
         let mut vector_index: u8 = 0;
         if self.settings.debugging {
             // println!("individual error blocks:");
@@ -709,6 +713,174 @@ impl QRData {
                 println!("{:?}", data_printout);
             }
         }
+        // write the data into one vector that contains all data to be written into the code
+        // adhering to the construction of the final message codeword sequence
+        // Block 1      D1 | D2 | ..... D11|      E1 | E2 | ..... E22|
+        // Block 2      D12| D13| ..... D22|      E23| E24| ..... E44|
+        // Block 3      D23| D24| ..... D33| D34| E45| E46| ..... E66|
+        // Block 4      D35| D36| ..... D45| D46| E67| E68| ..... E88|
+        // =>              V    V          V    V    V    V          V
+        // D1, D12, D23, D35, D2, D13, D24, D36, ... D11, D22, D33, D45, D34, D46, E1, E23, E45, E67, E2, E24, E46, E68, ... E22, E44, E66,E88
+        // the tricky part is that the first two block(s) are potentially shorter than the last two blocks and the "nonexistend" end of the first blocks
+        // must be skipped
+        // stores final data
+        let mut final_data_vect: Vec<u8> = vec![];
+        // indices for iteration trougth all blocks
+        let mut vector_index: usize = 0;
+        let mut block_index: usize = 0;
+        // index for prevention of infinite loop
+        let mut sanity_loop: u16 = 0;
+        // if there is only one block all data can just be copied as is
+        if error_blocks.len() == 1 {
+            loop {
+                // end loop if arrived at the end
+                if block_index == 0 && vector_index == all_blocks[0].len() {
+                    break;
+                }
+
+                // write values in finalvector
+                final_data_vect.push(all_blocks[block_index][vector_index]);
+
+                // increase vector index
+                block_index += 1;
+                // prepare indices for next loop
+                // next block if at the end of current block
+                if block_index >= tot_num_blocks {
+                    block_index = 0;
+                    vector_index += 1;
+                }
+                if sanity_loop > 3706 {
+                    break;
+                } else {
+                    sanity_loop += 1;
+                }
+            }
+        } else if error_blocks.len() == 2 {
+            // if there are two error blocks than the first is shorter than the second
+            // and it's "nonexistend" data must not be written
+            let index_nonexistent: usize = (error_blocks[1].num_data_bytes - 1) as usize;
+            // loop from beginning of vector to the end
+            // go full length over a vector
+            for vector_env in
+                0..(error_blocks[1].num_data_bytes + error_blocks[1].num_error_bytes) as usize
+            {
+                // go over every vector at the current index
+                for block_env in 0..tot_num_blocks {
+                    // if inside the smaller vector
+                    if block_env < (error_blocks[0].num_block - 1) as usize {
+                        // if past the nonexistent index decrement the read index
+                        if vector_env > index_nonexistent {
+                            final_data_vect.push(all_blocks[block_env][vector_env - 1]);
+                        } else if vector_env < index_nonexistent {
+                            // if before the nonexistent index don't mess with the index
+                            final_data_vect.push(all_blocks[block_env][vector_env]);
+                        }
+                        // if at exactly the nonexistent index do nothing
+                    } else {
+                        // write values in finalvector
+                        final_data_vect.push(all_blocks[block_env][vector_env]);
+                    }
+                }
+            }
+        } else {
+            panic!(
+                "qr code contained {} error blocks (1, or 2 are valid)",
+                error_blocks.len()
+            );
+        }
+        // everything was written?
+        assert!(final_data_vect.len() == tot_num_codewords);
+        if self.settings.debugging {
+            println!("data in final vector: {:?}", final_data_vect);
+        }
+        // write all data into the actual QR code
+        let mut vector_bit_index: usize = 0;
+        let mut x_index: usize = self.output_data.len() - 1 - 4;
+        let mut y_index: usize = self.output_data.len() - 1 - 4;
+        println!(
+            "starting indices for writing\nx: {}\ny: {}",
+            x_index, y_index
+        );
+        let mut is_y_shrinking: bool = true;
+        let mut is_right: bool = true;
+        // go througth all elements of the qr code and write data into
+        // everything uninitialised yet
+        loop {
+            // if nothing is inside the element yet
+            if self.role_data[x_index][y_index] == SymbolRole::Uninitialised {
+                // writing data
+                if ((vector_bit_index / 8) as usize) < final_data_vect.len() {
+                    // figure out if the current bit is true or false
+                    let element_value: bool = match vector_bit_index % 8 {
+                        0 => (final_data_vect[(vector_bit_index / 8) as usize] & 0b1000_0000) > 0,
+                        1 => (final_data_vect[(vector_bit_index / 8) as usize] & 0b0100_0000) > 0,
+                        2 => (final_data_vect[(vector_bit_index / 8) as usize] & 0b0010_0000) > 0,
+                        3 => (final_data_vect[(vector_bit_index / 8) as usize] & 0b0001_0000) > 0,
+                        4 => (final_data_vect[(vector_bit_index / 8) as usize] & 0b0000_1000) > 0,
+                        5 => (final_data_vect[(vector_bit_index / 8) as usize] & 0b0000_0100) > 0,
+                        6 => (final_data_vect[(vector_bit_index / 8) as usize] & 0b0000_0010) > 0,
+                        7 => (final_data_vect[(vector_bit_index / 8) as usize] & 0b0000_0001) > 0,
+                        _ => panic!(
+                            "wrong bit index in qr code writing {}",
+                            vector_bit_index % 8
+                        ),
+                    };
+                    if element_value {
+                        self.output_data[x_index][y_index] = SymbolStatus::LogicalTrue;
+                    } else {
+                        self.output_data[x_index][y_index] = SymbolStatus::LogicalFalse;
+                    }
+                } else {
+                    // if all data is written fill the remaining data in the code with logical false
+                    self.output_data[x_index][y_index] = SymbolStatus::LogicalFalse;
+                    println!("wrote filler false");
+                }
+                self.role_data[x_index][y_index] = SymbolRole::EncodingRegion;
+
+                // increase bit index
+                vector_bit_index += 1;
+                // println!("{}", self);
+            }
+
+            // update the indices
+            // elements get written in a right-left-right-left manner bottom up in
+            // the lower right corner of the code
+            // once the top is reached the index shifts 2 elements to the left and goes down again
+            // until it reaches the bottom shifts 2 elements to the left again
+            // repeat until yout hit
+            if is_right {
+                x_index -= 1;
+            } else {
+                x_index += 1;
+                if is_y_shrinking {
+                    y_index -= 1;
+                } else {
+                    y_index += 1;
+                }
+            }
+            // always shift between left and right
+            is_right = !is_right;
+            // direction changes (down/up)
+            // if y index hits the quiet zone move x to the left and reverse course
+            if (y_index < 4 || y_index > self.output_data.len() - 1 - 4) && is_right {
+                x_index -= 2;
+                // change direction
+                is_y_shrinking = !is_y_shrinking;
+            }
+            // avoid the timing pattern
+            if x_index == 10 {
+                x_index -= 1;
+                if self.settings.debugging {
+                    println!("avoided the timing pattern");
+                }
+            }
+
+            // end loop if everything is done/left quiet zone is hit
+            if x_index < 4 {
+                break;
+            }
+            // println!("x: {}; y: {}", x_index, y_index);
+        }
     }
 }
 
@@ -722,7 +894,7 @@ impl Display for QRData {
         // put every data element in formatter
         for row in 0..self.output_data.len() {
             for column in 0..self.output_data[row].len() {
-                match self.output_data[row][column] {
+                match self.output_data[column][row] {
                     // color output utilising with ANSI
                     // 105 => bright magenta
                     SymbolStatus::Uninitialised => {
@@ -755,7 +927,7 @@ impl Display for QRData {
             writeln!(f, "{}EncodingRegion{}", BRIGHTBLUE, COLORSTOP)?;
             for row in 0..self.role_data.len() {
                 for column in 0..self.role_data[row].len() {
-                    match self.role_data[row][column] {
+                    match self.role_data[column][row] {
                         // for now all magenta; rest to be implemented
                         SymbolRole::Uninitialised => {
                             write!(f, "{}{}{}", BRIGHTMAGENTA, "  ", COLORSTOP)?

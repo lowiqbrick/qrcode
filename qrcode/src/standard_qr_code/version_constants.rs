@@ -1258,7 +1258,7 @@ fn sanitycheck_version_information() {
         // make shure that the blocks summed up have the size of the version
         for memory_case in loop_version.2.clone() {
             let mut current_memory: u16 = 0;
-            for block in memory_case.1 {
+            for block in memory_case.1.iter() {
                 let total_length = block.num_data_bytes + block.num_error_bytes;
                 current_memory += block.num_block as u16 * total_length as u16;
                 assert_eq!(total_length, block.num_data_bytes + block.num_error_bytes);
@@ -1270,6 +1270,8 @@ fn sanitycheck_version_information() {
                 );
                 panic!();
             }
+            // assert that there can't be more than two error blocks per version
+            assert!(memory_case.1.len() <= 2 && memory_case.1.len() > 0);
         }
     }
 }

@@ -54,7 +54,12 @@ pub fn qr_code(input: Settings) {
     // after all preparations are done process and write the data
     qrdata.read_and_write();
     if qrdata.get_settings().debugging {
-        println!("after writing the information");
+        println!("after writing the actual data");
+        print!("{}", qrdata);
+    }
+    qrdata.version_information();
+    if qrdata.get_settings().debugging {
+        println!("after writing the version information");
         print!("{}", qrdata);
     }
     if qrdata.get_settings().debugging {

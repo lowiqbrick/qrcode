@@ -1,5 +1,5 @@
 use crate::polynomials::{Indeterminate, Polynomial};
-use crate::standard_qr_code::version_constants::alignment_pattern_data;
+use crate::standard_qr_code::version_constants::{alignment_pattern_data, version_info};
 use crate::{standard_qr_code::utils::get_verison_info, Settings};
 use std::fmt::{Display, Formatter, Result};
 
@@ -880,6 +880,87 @@ impl QRData {
                 break;
             }
             // println!("x: {}; y: {}", x_index, y_index);
+        }
+    }
+
+    pub fn version_information(&mut self) {
+        let version: u8 = self.version;
+        // only version 7 or larger
+        if version >= 7 && version <= 40 {
+            let bit_stream: u32 = version_info(version);
+            // write into lower left
+            let mut mask_left: u32 = 2_u32.pow(17);
+            let y_left_start: usize = self.output_data.len() - 4 - 9;
+            let mut x_index_left: usize = 3 + 6;
+            let mut y_index_left: usize = y_left_start;
+            // write data into field in the bottom left
+            loop {
+                // only write into elements reserved
+                if self.role_data[x_index_left][y_index_left]
+                    == SymbolRole::ReservedVersionInformation
+                {
+                    // write
+                    if (bit_stream & mask_left) > 0 {
+                        self.output_data[x_index_left][y_index_left] = SymbolStatus::LogicalTrue;
+                    } else {
+                        self.output_data[x_index_left][y_index_left] = SymbolStatus::LogicalFalse;
+                    }
+                } else {
+                    println!("{}", self);
+                    panic!("tried to write into field that isn't reserved for version information (x: {}, y: {})", x_index_left, y_index_left);
+                }
+                self.role_data[x_index_left][y_index_left] = SymbolRole::VersionInformation;
+
+                // if mask is one the entire information was written
+                if mask_left == 1 {
+                    break;
+                }
+                // update mask
+                mask_left = mask_left / 2;
+
+                // update the indeces
+                y_index_left -= 1;
+                if y_index_left <= y_left_start - 3 {
+                    x_index_left -= 1;
+                    y_index_left = y_left_start;
+                }
+            }
+            // write data into field in the top right
+            let mut mask_right: u32 = 2_u32.pow(17);
+            let x_left_start: usize = self.output_data.len() - 4 - 9;
+            let mut x_index_right: usize = x_left_start;
+            let mut y_index_right: usize = 3 + 6;
+            loop {
+                // only write into elements reserved
+                if self.role_data[x_index_right][y_index_right]
+                    == SymbolRole::ReservedVersionInformation
+                {
+                    // write
+                    if (bit_stream & mask_right) > 0 {
+                        self.output_data[x_index_right][y_index_right] = SymbolStatus::LogicalTrue;
+                    } else {
+                        self.output_data[x_index_right][y_index_right] = SymbolStatus::LogicalFalse;
+                    }
+                } else {
+                    println!("{}", self);
+                    panic!("tried to write into field that isn't reserved for version information (x: {}, y: {})", x_index_right, y_index_right);
+                }
+                self.role_data[x_index_right][y_index_right] = SymbolRole::VersionInformation;
+
+                // if mask is one the entire information was written
+                if mask_right == 1 {
+                    break;
+                }
+                // update mask
+                mask_right = mask_right / 2;
+
+                // update the indeces
+                x_index_right -= 1;
+                if x_index_right <= x_left_start - 3 {
+                    y_index_right -= 1;
+                    x_index_right = x_left_start;
+                }
+            }
         }
     }
 }

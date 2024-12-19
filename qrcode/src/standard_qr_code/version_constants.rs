@@ -1231,6 +1231,47 @@ pub fn alignment_pattern_data(version: u8) -> (u8, Vec<u8>) {
     }
 }
 
+/// contains all bit streams for all versions
+pub fn version_info(version: u8) -> u32 {
+    match version {
+        7 => 0x07C94,
+        8 => 0x085BC,
+        9 => 0x09A99,
+        10 => 0x0A4D3,
+        11 => 0x0BBF6,
+        12 => 0x0C762,
+        13 => 0x0D847,
+        14 => 0x0E60D,
+        15 => 0x0F928,
+        16 => 0x10B78,
+        17 => 0x1145D,
+        18 => 0x12A17,
+        19 => 0x13532,
+        20 => 0x149A6,
+        21 => 0x15683,
+        22 => 0x168C9,
+        23 => 0x177EC,
+        24 => 0x18EC4,
+        25 => 0x191E1,
+        26 => 0x1AFAB,
+        27 => 0x1B08E,
+        28 => 0x1CC1A,
+        29 => 0x1D33F,
+        30 => 0x1ED75,
+        31 => 0x1F250,
+        32 => 0x209D5,
+        33 => 0x216F0,
+        34 => 0x228BA,
+        35 => 0x2379F,
+        36 => 0x24B0B,
+        37 => 0x2542E,
+        38 => 0x26A64,
+        39 => 0x27541,
+        40 => 0x28C69,
+        _ => panic!("invlaid version handed to version information {}", version),
+    }
+}
+
 #[test]
 #[cfg(test)]
 fn sanitycheck_version_information() {

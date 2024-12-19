@@ -1272,6 +1272,48 @@ pub fn version_info(version: u8) -> u32 {
     }
 }
 
+/// valid formant information bit sequences
+pub fn information_sequences(data: u8) -> u16 {
+    match data {
+        0 => 0x5412,
+        1 => 0x5125,
+        2 => 0x5E7C,
+        3 => 0x5B4B,
+        4 => 0x45F9,
+        5 => 0x40CE,
+        6 => 0x4F97,
+        7 => 0x4AA0,
+        8 => 0x77C4,
+        9 => 0x72F3,
+        10 => 0x7DAA,
+        11 => 0x789D,
+        12 => 0x662F,
+        13 => 0x6318,
+        14 => 0x6C41,
+        15 => 0x6976,
+        16 => 0x1689,
+        17 => 0x13BE,
+        18 => 0x1CE7,
+        19 => 0x19D0,
+        20 => 0x0762,
+        21 => 0x0255,
+        22 => 0x0D0C,
+        23 => 0x083B,
+        24 => 0x355F,
+        25 => 0x3068,
+        26 => 0x3F31,
+        27 => 0x3A06,
+        28 => 0x24B4,
+        29 => 0x2183,
+        30 => 0x2EDA,
+        31 => 0x2BED,
+        _ => panic!(
+            "an invalid value given for information bit sequences {}",
+            data
+        ),
+    }
+}
+
 #[test]
 #[cfg(test)]
 fn sanitycheck_version_information() {

@@ -474,6 +474,12 @@ impl QRData {
                         if y != (max_index_width - 4 - 7 - 1) && x != (max_index_width - 4 - 7 - 1)
                         {
                             self.role_data[x][y] = SymbolRole::ReservedFormatInformation;
+                            // turn the elements white for mask calculation later
+                            if x == 12 && y == (width - 1 - 4 - 7) {
+                                self.output_data[x][y] = SymbolStatus::LogicalTrue;
+                            } else {
+                                self.output_data[x][y] = SymbolStatus::LogicalFalse;
+                            }
                         }
                     }
                 }

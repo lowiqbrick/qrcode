@@ -1063,12 +1063,12 @@ impl Display for QRData {
                 match self.output_data[column][row] {
                     // color output utilising with ANSI
                     // 105 => bright magenta
-                    SymbolStatus::Uninitialised => write!(f, "{}  {}", BRIGHTMAGENTA, COLORSTOP)?,
+                    SymbolStatus::Uninitialised => write!(f, "{}   {}", BRIGHTMAGENTA, COLORSTOP)?,
 
                     // 40 => Black
-                    SymbolStatus::LogicalTrue => write!(f, "{}  {}", BLACK, COLORSTOP)?,
+                    SymbolStatus::LogicalTrue => write!(f, "{}   {}", BLACK, COLORSTOP)?,
                     // 107 => Bright White
-                    SymbolStatus::LogicalFalse => write!(f, "{}  {}", BRIGHTWHITE, COLORSTOP)?,
+                    SymbolStatus::LogicalFalse => write!(f, "{}   {}", BRIGHTWHITE, COLORSTOP)?,
                 }
             }
             // don't forget the newlines
@@ -1091,27 +1091,29 @@ impl Display for QRData {
                 for column in 0..self.role_data[row].len() {
                     match self.role_data[column][row] {
                         // for now all magenta; rest to be implemented
-                        SymbolRole::Uninitialised => write!(f, "{}  {}", BRIGHTMAGENTA, COLORSTOP)?,
-                        SymbolRole::QuietZone => write!(f, "{}  {}", BRIGHTWHITE, COLORSTOP)?,
-                        SymbolRole::FinderPattern => write!(f, "{}  {}", WHITE, COLORSTOP)?,
-                        SymbolRole::AlignmentPattern => {
-                            write!(f, "{}  {}", BRIGHTBLACK, COLORSTOP)?
+                        SymbolRole::Uninitialised => {
+                            write!(f, "{}   {}", BRIGHTMAGENTA, COLORSTOP)?
                         }
-                        SymbolRole::TimingPattern => write!(f, "{}  {}", BRIGHTRED, COLORSTOP)?,
-                        SymbolRole::Separator => write!(f, "{}  {}", RED, COLORSTOP)?,
+                        SymbolRole::QuietZone => write!(f, "{}   {}", BRIGHTWHITE, COLORSTOP)?,
+                        SymbolRole::FinderPattern => write!(f, "{}   {}", WHITE, COLORSTOP)?,
+                        SymbolRole::AlignmentPattern => {
+                            write!(f, "{}   {}", BRIGHTBLACK, COLORSTOP)?
+                        }
+                        SymbolRole::TimingPattern => write!(f, "{}   {}", BRIGHTRED, COLORSTOP)?,
+                        SymbolRole::Separator => write!(f, "{}   {}", RED, COLORSTOP)?,
                         SymbolRole::ReservedFormatInformation => {
-                            write!(f, "{}  {}", MAGENTA, COLORSTOP)?
+                            write!(f, "{}   {}", MAGENTA, COLORSTOP)?
                         }
                         SymbolRole::FormatInformation => {
-                            write!(f, "{}  {}", BRIGHTYELLOW, COLORSTOP)?
+                            write!(f, "{}   {}", BRIGHTYELLOW, COLORSTOP)?
                         }
                         SymbolRole::ReservedVersionInformation => {
-                            write!(f, "{}  {}", BLUE, COLORSTOP)?
+                            write!(f, "{}   {}", BLUE, COLORSTOP)?
                         }
                         SymbolRole::VersionInformation => {
-                            write!(f, "{}  {}", BRIGHTCYAN, COLORSTOP)?
+                            write!(f, "{}   {}", BRIGHTCYAN, COLORSTOP)?
                         }
-                        SymbolRole::EncodingRegion => write!(f, "{}  {}", BRIGHTBLUE, COLORSTOP)?,
+                        SymbolRole::EncodingRegion => write!(f, "{}   {}", BRIGHTBLUE, COLORSTOP)?,
                     }
                 }
                 // don't forget the newlines
@@ -1124,8 +1126,6 @@ impl Display for QRData {
 }
 
 mod tests {
-    use crate::standard_qr_code::qr_struct::SymbolStatus;
-
     #[test]
     fn test_my_vect() {
         use super::MyBitVector;
@@ -1142,6 +1142,7 @@ mod tests {
 
     #[test]
     fn symbol_status_xor() {
+        use crate::standard_qr_code::qr_struct::SymbolStatus;
         assert_eq!(
             SymbolStatus::LogicalFalse ^ SymbolStatus::LogicalFalse,
             SymbolStatus::LogicalFalse

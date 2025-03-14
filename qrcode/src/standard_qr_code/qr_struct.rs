@@ -5,7 +5,6 @@ use crate::{standard_qr_code::utils::get_verison_info, Settings};
 use std::cmp::Ordering;
 use std::fmt::{Display, Formatter, Result};
 use std::ops::BitXor;
-use std::u32;
 
 use super::version_constants::information_sequences;
 
@@ -232,6 +231,146 @@ macro_rules! bit_to_qrcode {
             $self.output_data[$x_2][$y_2] = SymbolStatus::LogicalFalse;
         }
         $self.role_data[$x_2][$y_2] = SymbolRole::FormatInformation;
+    };
+}
+
+macro_rules! write_format_info {
+    ($self:expr, $smallest_index: expr, $biggest_index: expr, $final_data_bits: expr) => {
+        // 14
+        bit_to_qrcode!(
+            $self,
+            $smallest_index,
+            $smallest_index + 8,
+            $smallest_index + 8,
+            $biggest_index,
+            ($final_data_bits & 0b0100_0000_0000_0000) > 0
+        );
+        // 13
+        bit_to_qrcode!(
+            $self,
+            $smallest_index + 1,
+            $smallest_index + 8,
+            $smallest_index + 8,
+            $biggest_index - 1,
+            ($final_data_bits & 0b0010_0000_0000_0000) > 0
+        );
+        // 12
+        bit_to_qrcode!(
+            $self,
+            $smallest_index + 2,
+            $smallest_index + 8,
+            $smallest_index + 8,
+            $biggest_index - 2,
+            ($final_data_bits & 0b0001_0000_0000_0000) > 0
+        );
+        // 11
+        bit_to_qrcode!(
+            $self,
+            $smallest_index + 3,
+            $smallest_index + 8,
+            $smallest_index + 8,
+            $biggest_index - 3,
+            ($final_data_bits & 0b0000_1000_0000_0000) > 0
+        );
+        // 10
+        bit_to_qrcode!(
+            $self,
+            $smallest_index + 4,
+            $smallest_index + 8,
+            $smallest_index + 8,
+            $biggest_index - 4,
+            ($final_data_bits & 0b0000_0100_0000_0000) > 0
+        );
+        // 9
+        bit_to_qrcode!(
+            $self,
+            $smallest_index + 5,
+            $smallest_index + 8,
+            $smallest_index + 8,
+            $biggest_index - 5,
+            ($final_data_bits & 0b0000_0010_0000_0000) > 0
+        );
+        // 8
+        bit_to_qrcode!(
+            $self,
+            $smallest_index + 7,
+            $smallest_index + 8,
+            $smallest_index + 8,
+            $biggest_index - 6,
+            ($final_data_bits & 0b0000_0001_0000_0000) > 0
+        );
+        // 7
+        bit_to_qrcode!(
+            $self,
+            $smallest_index + 8,
+            $smallest_index + 8,
+            $biggest_index - 7,
+            $smallest_index + 8,
+            ($final_data_bits & 0b0000_0000_1000_0000) > 0
+        );
+        // 6
+        bit_to_qrcode!(
+            $self,
+            $smallest_index + 8,
+            $smallest_index + 7,
+            $biggest_index - 6,
+            $smallest_index + 8,
+            ($final_data_bits & 0b0000_0000_0100_0000) > 0
+        );
+        // 5
+        bit_to_qrcode!(
+            $self,
+            $smallest_index + 8,
+            $smallest_index + 5,
+            $biggest_index - 5,
+            $smallest_index + 8,
+            ($final_data_bits & 0b0000_0000_0010_0000) > 0
+        );
+        // 4
+        bit_to_qrcode!(
+            $self,
+            $smallest_index + 8,
+            $smallest_index + 4,
+            $biggest_index - 4,
+            $smallest_index + 8,
+            ($final_data_bits & 0b0000_0000_0001_0000) > 0
+        );
+        // 3
+        bit_to_qrcode!(
+            $self,
+            $smallest_index + 8,
+            $smallest_index + 3,
+            $biggest_index - 3,
+            $smallest_index + 8,
+            ($final_data_bits & 0b0000_0000_0000_1000) > 0
+        );
+        // 2
+        bit_to_qrcode!(
+            $self,
+            $smallest_index + 8,
+            $smallest_index + 2,
+            $biggest_index - 2,
+            $smallest_index + 8,
+            ($final_data_bits & 0b0000_0000_0000_0100) > 0
+        );
+        // 1
+        bit_to_qrcode!(
+            $self,
+            $smallest_index + 8,
+            $smallest_index + 1,
+            $biggest_index - 1,
+            $smallest_index + 8,
+            ($final_data_bits & 0b0000_0000_0000_0010) > 0
+        );
+        // 0
+        bit_to_qrcode!(
+            $self,
+            $smallest_index + 8,
+            $smallest_index,
+            $biggest_index,
+            $smallest_index + 8,
+            ($final_data_bits & 0b0000_0000_0000_0001) > 0
+        );
     };
 }
 
@@ -1220,141 +1359,8 @@ impl QRData {
         };
         data_bits |= lowest_panalty_mask_number;
         let final_data_bits = information_sequences(data_bits);
-        // 14
-        bit_to_qrcode!(
-            self,
-            smallest_index,
-            smallest_index + 8,
-            smallest_index + 8,
-            biggest_index,
-            (final_data_bits & 0b0100_0000_0000_0000) > 0
-        );
-        // 13
-        bit_to_qrcode!(
-            self,
-            smallest_index + 1,
-            smallest_index + 8,
-            smallest_index + 8,
-            biggest_index - 1,
-            (final_data_bits & 0b0010_0000_0000_0000) > 0
-        );
-        // 12
-        bit_to_qrcode!(
-            self,
-            smallest_index + 2,
-            smallest_index + 8,
-            smallest_index + 8,
-            biggest_index - 2,
-            (final_data_bits & 0b0001_0000_0000_0000) > 0
-        );
-        // 11
-        bit_to_qrcode!(
-            self,
-            smallest_index + 3,
-            smallest_index + 8,
-            smallest_index + 8,
-            biggest_index - 3,
-            (final_data_bits & 0b0000_1000_0000_0000) > 0
-        );
-        // 10
-        bit_to_qrcode!(
-            self,
-            smallest_index + 4,
-            smallest_index + 8,
-            smallest_index + 8,
-            biggest_index - 4,
-            (final_data_bits & 0b0000_0100_0000_0000) > 0
-        );
-        // 9
-        bit_to_qrcode!(
-            self,
-            smallest_index + 5,
-            smallest_index + 8,
-            smallest_index + 8,
-            biggest_index - 5,
-            (final_data_bits & 0b0000_0010_0000_0000) > 0
-        );
-        // 8
-        bit_to_qrcode!(
-            self,
-            smallest_index + 7,
-            smallest_index + 8,
-            smallest_index + 8,
-            biggest_index - 6,
-            (final_data_bits & 0b0000_0001_0000_0000) > 0
-        );
-        // 7
-        bit_to_qrcode!(
-            self,
-            smallest_index + 8,
-            smallest_index + 8,
-            biggest_index - 7,
-            smallest_index + 8,
-            (final_data_bits & 0b0000_0000_1000_0000) > 0
-        );
-        // 6
-        bit_to_qrcode!(
-            self,
-            smallest_index + 8,
-            smallest_index + 7,
-            biggest_index - 6,
-            smallest_index + 8,
-            (final_data_bits & 0b0000_0000_0100_0000) > 0
-        );
-        // 5
-        bit_to_qrcode!(
-            self,
-            smallest_index + 8,
-            smallest_index + 5,
-            biggest_index - 5,
-            smallest_index + 8,
-            (final_data_bits & 0b0000_0000_0010_0000) > 0
-        );
-        // 4
-        bit_to_qrcode!(
-            self,
-            smallest_index + 8,
-            smallest_index + 4,
-            biggest_index - 4,
-            smallest_index + 8,
-            (final_data_bits & 0b0000_0000_0001_0000) > 0
-        );
-        // 3
-        bit_to_qrcode!(
-            self,
-            smallest_index + 8,
-            smallest_index + 3,
-            biggest_index - 3,
-            smallest_index + 8,
-            (final_data_bits & 0b0000_0000_0000_1000) > 0
-        );
-        // 2
-        bit_to_qrcode!(
-            self,
-            smallest_index + 8,
-            smallest_index + 2,
-            biggest_index - 2,
-            smallest_index + 8,
-            (final_data_bits & 0b0000_0000_0000_0100) > 0
-        );
-        // 1
-        bit_to_qrcode!(
-            self,
-            smallest_index + 8,
-            smallest_index + 1,
-            biggest_index - 1,
-            smallest_index + 8,
-            (final_data_bits & 0b0000_0000_0000_0010) > 0
-        );
-        // 0
-        bit_to_qrcode!(
-            self,
-            smallest_index + 8,
-            smallest_index,
-            biggest_index,
-            smallest_index + 8,
-            (final_data_bits & 0b0000_0000_0000_0001) > 0
-        );
+        // write info into qrcode
+        write_format_info!(self, smallest_index, biggest_index, final_data_bits);
     }
 }
 

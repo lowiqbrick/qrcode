@@ -1,3 +1,4 @@
+use crate::input::ErrorLevel;
 use crate::polynomials::{Indeterminate, Polynomial};
 use crate::standard_qr_code::version_constants::{alignment_pattern_data, version_info};
 use crate::{standard_qr_code::utils::get_verison_info, Settings};
@@ -5,6 +6,8 @@ use std::cmp::Ordering;
 use std::fmt::{Display, Formatter, Result};
 use std::ops::BitXor;
 use std::u32;
+
+use super::version_constants::information_sequences;
 
 // constants for ANSI colors
 // https://en.wikipedia.org/wiki/ANSI_escape_code
@@ -213,6 +216,23 @@ pub struct QRData {
     version: u8,
     error_blocks: Vec<ErrorBlockInfo>,
     settings: Settings,
+}
+
+macro_rules! bit_to_qrcode {
+    ($self: expr, $x_1: expr, $y_1: expr, $x_2: expr, $y_2: expr, $bit: expr) => {
+        if $bit {
+            $self.output_data[$x_1][$y_1] = SymbolStatus::LogicalTrue;
+        } else {
+            $self.output_data[$x_1][$y_1] = SymbolStatus::LogicalFalse;
+        }
+        $self.role_data[$x_1][$y_1] = SymbolRole::FormatInformation;
+        if $bit {
+            $self.output_data[$x_2][$y_2] = SymbolStatus::LogicalTrue;
+        } else {
+            $self.output_data[$x_2][$y_2] = SymbolStatus::LogicalFalse;
+        }
+        $self.role_data[$x_2][$y_2] = SymbolRole::FormatInformation;
+    };
 }
 
 impl QRData {
@@ -1012,13 +1032,150 @@ impl QRData {
         working_copy
     }
 
-    fn calculate_penalty(self) -> u32 {
-        0
+    fn calculate_penalty(&self) -> u32 {
+        // based on https://www.thonky.com/qr-code-tutorial/data-masking (14.03.2025)
+        let mut total_score = 0;
+        // condition #1
+        // multiple consecutive elements of the same color
+        let low_index = 4;
+        let high_index = self.output_data.len() - 4;
+        // move top to bottom, left to right
+        for x in low_index..high_index {
+            let mut former_status = SymbolStatus::LogicalFalse;
+            let mut consecutive_counter = 0;
+            for y in low_index..high_index {
+                if self.output_data[x][y] == former_status {
+                    consecutive_counter += 1;
+                    match consecutive_counter.cmp(&5) {
+                        Ordering::Equal => total_score += 3,
+                        Ordering::Greater => total_score += 1,
+                        Ordering::Less => (),
+                    }
+                } else {
+                    consecutive_counter = 0;
+                    former_status = self.output_data[x][y];
+                }
+            }
+        }
+        // move left to right, top to bottom
+        for y in low_index..high_index {
+            let mut former_status = SymbolStatus::LogicalFalse;
+            let mut consecutive_counter = 0;
+            for x in low_index..high_index {
+                if self.output_data[x][y] == former_status {
+                    consecutive_counter += 1;
+                    match consecutive_counter.cmp(&5) {
+                        Ordering::Equal => total_score += 3,
+                        Ordering::Greater => total_score += 1,
+                        Ordering::Less => (),
+                    }
+                } else {
+                    consecutive_counter = 0;
+                    former_status = self.output_data[x][y];
+                }
+            }
+        }
+        // condition #2
+        // blocks of the same color
+        for x in low_index..high_index - 1 {
+            for y in low_index..high_index - 1 {
+                // are all elements in a 2x2 box the same?
+                if self.output_data[x][y] == self.output_data[x + 1][y]
+                    && self.output_data[x][y] == self.output_data[x][y + 1]
+                    && self.output_data[x][y] == self.output_data[x + 1][y + 1]
+                {
+                    total_score += 3;
+                }
+            }
+        }
+        // condition #3
+        // sequences that are similar to the finder pattern
+        let pattern1 = [
+            SymbolStatus::LogicalTrue,
+            SymbolStatus::LogicalFalse,
+            SymbolStatus::LogicalTrue,
+            SymbolStatus::LogicalTrue,
+            SymbolStatus::LogicalTrue,
+            SymbolStatus::LogicalFalse,
+            SymbolStatus::LogicalTrue,
+            SymbolStatus::LogicalFalse,
+            SymbolStatus::LogicalFalse,
+            SymbolStatus::LogicalFalse,
+            SymbolStatus::LogicalFalse,
+        ];
+        let pattern2 = [
+            SymbolStatus::LogicalFalse,
+            SymbolStatus::LogicalFalse,
+            SymbolStatus::LogicalFalse,
+            SymbolStatus::LogicalFalse,
+            SymbolStatus::LogicalTrue,
+            SymbolStatus::LogicalFalse,
+            SymbolStatus::LogicalTrue,
+            SymbolStatus::LogicalTrue,
+            SymbolStatus::LogicalTrue,
+            SymbolStatus::LogicalFalse,
+            SymbolStatus::LogicalTrue,
+        ];
+        // move top to bottom, left to right
+        for x in low_index..high_index {
+            let mut element_vector = vec![];
+            for y in low_index..high_index {
+                element_vector.push(self.output_data[x][y]);
+                // if longer than the pattern shorten the vector to the length of the pattern
+                if element_vector.len() > 11 {
+                    _ = element_vector.remove(0);
+                }
+                if element_vector.len() == 11
+                    && (element_vector == pattern1 || element_vector == pattern2)
+                {
+                    total_score += 40;
+                }
+            }
+        }
+        // move left to right, top to bottom
+        for y in low_index..high_index {
+            let mut element_vector = vec![];
+            for x in low_index..high_index {
+                element_vector.push(self.output_data[x][y]);
+                // if longer than the pattern shorten the vector to the length of the pattern
+                if element_vector.len() > 11 {
+                    _ = element_vector.remove(0);
+                }
+                if element_vector.len() == 11
+                    && (element_vector == pattern1 || element_vector == pattern2)
+                {
+                    total_score += 40;
+                }
+            }
+        }
+        // condition #4
+        // ratio of black to white elements
+        let total_elements = (high_index - low_index) * (high_index - low_index);
+        let mut total_black = 0;
+        for x in low_index..high_index {
+            for y in low_index..high_index {
+                if self.output_data[x][y] == SymbolStatus::LogicalTrue {
+                    total_black += 1;
+                }
+            }
+        }
+        let precentage_dark = (total_black as f32 / total_elements as f32) * 100.0;
+        let dark_floor = (precentage_dark / 5.0).floor() * 5.0;
+        let dark_result1 = (dark_floor - 50.0).abs() / 5.0;
+        let dark_result2 = ((dark_floor + 5.0) - 50.0).abs() / 5.0;
+        if dark_result1 >= dark_result2 {
+            total_score += dark_result2 as u32 * 10;
+        } else {
+            total_score *= dark_result1 as u32 * 10;
+        }
+        total_score
     }
 
     /// this function applies the mask with the lowest penalty
     /// to the qr code and applies/writes the format informaiton
     pub fn masking_format_information(&mut self) {
+        let smallest_index = 4;
+        let biggest_index = self.output_data.len() - 4 - 1;
         // create white qr code for debugging the masks
         let mut self_blank = self.clone();
         for x in 0..self.output_data.len() {
@@ -1033,7 +1190,7 @@ impl QRData {
         let mut lowest_panalty_mask_number = 0;
         for mask_number in 0..8 {
             let current_masked = self.apply_mask(mask_number);
-            let current_loss = current_masked.clone().calculate_penalty();
+            let current_loss = current_masked.calculate_penalty();
             if current_loss < lowest_penalty_so_far {
                 lowest_penalty_code = current_masked;
                 lowest_penalty_so_far = current_loss;
@@ -1047,6 +1204,157 @@ impl QRData {
                 );
             }
         }
+
+        // overwrite own data with the masked data
+        self.output_data = lowest_penalty_code.output_data;
+
+        // write the mask information into the qrcode
+        // get the databits
+        let mut data_bits: u8 = 0;
+        data_bits |= match self.settings.error_level {
+            ErrorLevel::L => 0b01 << 3,
+            // value is 0, so do nothing
+            ErrorLevel::M => 0b00 << 3,
+            ErrorLevel::Q => 0b11 << 3,
+            ErrorLevel::H => 0b10 << 3,
+        };
+        data_bits |= lowest_panalty_mask_number;
+        let final_data_bits = information_sequences(data_bits);
+        // 14
+        bit_to_qrcode!(
+            self,
+            smallest_index,
+            smallest_index + 8,
+            smallest_index + 8,
+            biggest_index,
+            (final_data_bits & 0b0100_0000_0000_0000) > 0
+        );
+        // 13
+        bit_to_qrcode!(
+            self,
+            smallest_index + 1,
+            smallest_index + 8,
+            smallest_index + 8,
+            biggest_index - 1,
+            (final_data_bits & 0b0010_0000_0000_0000) > 0
+        );
+        // 12
+        bit_to_qrcode!(
+            self,
+            smallest_index + 2,
+            smallest_index + 8,
+            smallest_index + 8,
+            biggest_index - 2,
+            (final_data_bits & 0b0001_0000_0000_0000) > 0
+        );
+        // 11
+        bit_to_qrcode!(
+            self,
+            smallest_index + 3,
+            smallest_index + 8,
+            smallest_index + 8,
+            biggest_index - 3,
+            (final_data_bits & 0b0000_1000_0000_0000) > 0
+        );
+        // 10
+        bit_to_qrcode!(
+            self,
+            smallest_index + 4,
+            smallest_index + 8,
+            smallest_index + 8,
+            biggest_index - 4,
+            (final_data_bits & 0b0000_0100_0000_0000) > 0
+        );
+        // 9
+        bit_to_qrcode!(
+            self,
+            smallest_index + 5,
+            smallest_index + 8,
+            smallest_index + 8,
+            biggest_index - 5,
+            (final_data_bits & 0b0000_0010_0000_0000) > 0
+        );
+        // 8
+        bit_to_qrcode!(
+            self,
+            smallest_index + 7,
+            smallest_index + 8,
+            smallest_index + 8,
+            biggest_index - 6,
+            (final_data_bits & 0b0000_0001_0000_0000) > 0
+        );
+        // 7
+        bit_to_qrcode!(
+            self,
+            smallest_index + 8,
+            smallest_index + 8,
+            biggest_index - 7,
+            smallest_index + 8,
+            (final_data_bits & 0b0000_0000_1000_0000) > 0
+        );
+        // 6
+        bit_to_qrcode!(
+            self,
+            smallest_index + 8,
+            smallest_index + 7,
+            biggest_index - 6,
+            smallest_index + 8,
+            (final_data_bits & 0b0000_0000_0100_0000) > 0
+        );
+        // 5
+        bit_to_qrcode!(
+            self,
+            smallest_index + 8,
+            smallest_index + 5,
+            biggest_index - 5,
+            smallest_index + 8,
+            (final_data_bits & 0b0000_0000_0010_0000) > 0
+        );
+        // 4
+        bit_to_qrcode!(
+            self,
+            smallest_index + 8,
+            smallest_index + 4,
+            biggest_index - 4,
+            smallest_index + 8,
+            (final_data_bits & 0b0000_0000_0001_0000) > 0
+        );
+        // 3
+        bit_to_qrcode!(
+            self,
+            smallest_index + 8,
+            smallest_index + 3,
+            biggest_index - 3,
+            smallest_index + 8,
+            (final_data_bits & 0b0000_0000_0000_1000) > 0
+        );
+        // 2
+        bit_to_qrcode!(
+            self,
+            smallest_index + 8,
+            smallest_index + 2,
+            biggest_index - 2,
+            smallest_index + 8,
+            (final_data_bits & 0b0000_0000_0000_0100) > 0
+        );
+        // 1
+        bit_to_qrcode!(
+            self,
+            smallest_index + 8,
+            smallest_index + 1,
+            biggest_index - 1,
+            smallest_index + 8,
+            (final_data_bits & 0b0000_0000_0000_0010) > 0
+        );
+        // 0
+        bit_to_qrcode!(
+            self,
+            smallest_index + 8,
+            smallest_index,
+            biggest_index,
+            smallest_index + 8,
+            (final_data_bits & 0b0000_0000_0000_0001) > 0
+        );
     }
 }
 

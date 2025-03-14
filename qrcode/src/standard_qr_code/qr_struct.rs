@@ -3,6 +3,8 @@ use crate::standard_qr_code::version_constants::{alignment_pattern_data, version
 use crate::{standard_qr_code::utils::get_verison_info, Settings};
 use std::cmp::Ordering;
 use std::fmt::{Display, Formatter, Result};
+use std::ops::BitXor;
+use std::u32;
 
 // constants for ANSI colors
 // https://en.wikipedia.org/wiki/ANSI_escape_code
@@ -125,7 +127,7 @@ impl MyBitVector {
 }
 
 /// represents the qr code symbols statuses, which are uninitialised, true false
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 
 pub enum SymbolStatus {
     /// white symbol in qr code; false
@@ -136,8 +138,27 @@ pub enum SymbolStatus {
     Uninitialised,
 }
 
+impl BitXor for SymbolStatus {
+    type Output = Self;
+    fn bitxor(self, rhs: Self) -> Self {
+        match self {
+            SymbolStatus::LogicalFalse => match rhs {
+                SymbolStatus::LogicalFalse => SymbolStatus::LogicalFalse,
+                SymbolStatus::LogicalTrue => SymbolStatus::LogicalTrue,
+                SymbolStatus::Uninitialised => panic!("SymbolStatus::Uninitialised can't be XOR'd"),
+            },
+            SymbolStatus::LogicalTrue => match rhs {
+                SymbolStatus::LogicalFalse => SymbolStatus::LogicalTrue,
+                SymbolStatus::LogicalTrue => SymbolStatus::LogicalFalse,
+                SymbolStatus::Uninitialised => panic!("SymbolStatus::Uninitialised can't be XOR'd"),
+            },
+            SymbolStatus::Uninitialised => panic!("SymbolStatus::Uninitialised can't be XOR'd"),
+        }
+    }
+}
+
 /// represents the role of symbol inside the qr code
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum SymbolRole {
     /// role not get determined
     Uninitialised,
@@ -185,7 +206,7 @@ impl ErrorBlockInfo {
 }
 
 /// encomposes all data required to generate a qr code
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct QRData {
     output_data: Vec<Vec<SymbolStatus>>,
     role_data: Vec<Vec<SymbolRole>>,
@@ -507,6 +528,7 @@ impl QRData {
         if self.settings.debugging {
             println!("version: {}", self.version);
         }
+        // alignment_information.1 is empty for version 1, since version 1 doesn't have any alignment patterns
         if self.version > 1 {
             let mut alignment_information: (u8, Vec<u8>) = alignment_pattern_data(self.version);
             // increase the centres of the alignment patterns by four to compensate for the quiet zone
@@ -946,6 +968,86 @@ impl QRData {
             }
         }
     }
+
+    fn apply_mask(&self, mask_number: u8) -> Self {
+        assert!((0..=7).contains(&mask_number));
+        let mut working_copy = self.clone();
+        // iterate over qr code and apply the masking
+        let smallest_index = 4;
+        let biggest_index = self.output_data.len() - 4;
+        // left to right
+        for i in smallest_index..biggest_index {
+            // top to bottom
+            for j in smallest_index..biggest_index {
+                // only mask data
+                if self.role_data[i][j] == SymbolRole::EncodingRegion {
+                    // remove qiet zone around qr code for masking purposes
+                    // TODO figure out why i and j need to be flipped here in order for
+                    // the masks to work properly (for i_mod and j_mod)
+                    let i_mod = j - 4;
+                    let j_mod = i - 4;
+                    // apply mask according to mask_number
+                    let match_bool = match mask_number {
+                        0 => (i_mod + j_mod) % 2 == 0,
+                        1 => i_mod % 2 == 0,
+                        2 => j_mod % 3 == 0,
+                        3 => (i_mod + j_mod) % 3 == 0,
+                        4 => {
+                            ((i_mod as f32 / 2.0) as usize + (j_mod as f32 / 3.0) as usize) % 2 == 0
+                        }
+                        5 => (i_mod * j_mod) % 2 + (i_mod * j_mod) % 3 == 0,
+                        6 => ((i_mod * j_mod) % 2 + (i_mod * j_mod) % 3) % 2 == 0,
+                        7 => ((i_mod + j_mod) % 2 + (i_mod * j_mod) % 3) % 2 == 0,
+                        // cannot be reached due to assert earlier
+                        _ => false,
+                    };
+                    // invert value if necessary
+                    if match_bool {
+                        working_copy.output_data[i][j] =
+                            working_copy.output_data[i][j] ^ SymbolStatus::LogicalTrue;
+                    }
+                }
+            }
+        }
+        working_copy
+    }
+
+    fn calculate_penalty(self) -> u32 {
+        0
+    }
+
+    /// this function applies the mask with the lowest penalty
+    /// to the qr code and applies/writes the format informaiton
+    pub fn masking_format_information(&mut self) {
+        // create white qr code for debugging the masks
+        let mut self_blank = self.clone();
+        for x in 0..self.output_data.len() {
+            for y in 0..self.output_data.len() {
+                // 'paint' everything white
+                self_blank.output_data[x][y] = SymbolStatus::LogicalFalse;
+            }
+        }
+        // apply every mask to the qr code and select the mask with the lowest penalty
+        let mut lowest_penalty_code = self.clone();
+        let mut lowest_penalty_so_far = u32::MAX;
+        let mut lowest_panalty_mask_number = 0;
+        for mask_number in 0..8 {
+            let current_masked = self.apply_mask(mask_number);
+            let current_loss = current_masked.clone().calculate_penalty();
+            if current_loss < lowest_penalty_so_far {
+                lowest_penalty_code = current_masked;
+                lowest_penalty_so_far = current_loss;
+                lowest_panalty_mask_number = mask_number;
+            }
+            if self.settings.debugging {
+                print!(
+                    "mask {}:\n{}",
+                    mask_number,
+                    self_blank.apply_mask(mask_number)
+                );
+            }
+        }
+    }
 }
 
 impl Display for QRData {
@@ -1022,6 +1124,7 @@ impl Display for QRData {
 }
 
 mod tests {
+    use crate::standard_qr_code::qr_struct::SymbolStatus;
 
     #[test]
     fn test_my_vect() {
@@ -1035,5 +1138,25 @@ mod tests {
             vec![0b0100_0101, 0b0101_0000]
         );
         assert_eq!(test_vec.data, vec![0b0100_0101, 0b0101_0000]);
+    }
+
+    #[test]
+    fn symbol_status_xor() {
+        assert_eq!(
+            SymbolStatus::LogicalFalse ^ SymbolStatus::LogicalFalse,
+            SymbolStatus::LogicalFalse
+        );
+        assert_eq!(
+            SymbolStatus::LogicalFalse ^ SymbolStatus::LogicalTrue,
+            SymbolStatus::LogicalTrue
+        );
+        assert_eq!(
+            SymbolStatus::LogicalTrue ^ SymbolStatus::LogicalFalse,
+            SymbolStatus::LogicalTrue
+        );
+        assert_eq!(
+            SymbolStatus::LogicalTrue ^ SymbolStatus::LogicalTrue,
+            SymbolStatus::LogicalFalse
+        );
     }
 }

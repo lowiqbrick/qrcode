@@ -62,6 +62,11 @@ pub fn qr_code(input: Settings) {
         println!("after writing the version information");
         print!("{}", qrdata);
     }
+    qrdata.masking_format_information();
+    if qrdata.get_settings().debugging {
+        println!("after applying the mask and format information");
+        print!("{}", qrdata);
+    }
     if qrdata.get_settings().debugging {
         // additional info
         println!(

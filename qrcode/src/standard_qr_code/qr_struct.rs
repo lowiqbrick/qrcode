@@ -184,6 +184,8 @@ pub enum SymbolRole {
     ReservedFormatInformation,
     /// Format Information; error correction level and mask pattern
     FormatInformation,
+    /// Element that is always LogicalTrue/black
+    AlwaysTrue,
 }
 
 /// contains error correction block information
@@ -299,6 +301,9 @@ macro_rules! write_format_info {
             $biggest_index - 6,
             ($final_data_bits & 0b0000_0001_0000_0000) > 0
         );
+        // since the other fields are changed from ReservedFormatInformation to
+        // FormatInformation the element that is always black, should be adjusted aswell
+        $self.role_data[$smallest_index + 8][$biggest_index - 7] = SymbolRole::AlwaysTrue;
         // 7
         bit_to_qrcode!(
             $self,
@@ -1401,6 +1406,7 @@ impl Display for QRData {
             writeln!(f, "{}ReservedVersionInformation{}", BLUE, COLORSTOP)?;
             writeln!(f, "{}VersionInformation{}", BRIGHTCYAN, COLORSTOP)?;
             writeln!(f, "{}EncodingRegion{}", BRIGHTBLUE, COLORSTOP)?;
+            writeln!(f, "{}AlwaysTrue{}", BLACK, COLORSTOP)?;
             for row in 0..self.role_data.len() {
                 for column in 0..self.role_data[row].len() {
                     match self.role_data[column][row] {
@@ -1428,6 +1434,7 @@ impl Display for QRData {
                             write!(f, "{}   {}", BRIGHTCYAN, COLORSTOP)?
                         }
                         SymbolRole::EncodingRegion => write!(f, "{}   {}", BRIGHTBLUE, COLORSTOP)?,
+                        SymbolRole::AlwaysTrue => write!(f, "{}   {}", BLACK, COLORSTOP)?,
                     }
                 }
                 // don't forget the newlines

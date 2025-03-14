@@ -1,6 +1,7 @@
 use crate::polynomials::{Indeterminate, Polynomial};
 use crate::standard_qr_code::version_constants::{alignment_pattern_data, version_info};
 use crate::{standard_qr_code::utils::get_verison_info, Settings};
+use std::cmp::Ordering;
 use std::fmt::{Display, Formatter, Result};
 
 // constants for ANSI colors
@@ -79,9 +80,8 @@ impl MyBitVector {
         for index in self.curr_position..self.curr_position + size as u32 {
             // println!("read bit {}", current_bit_read);
             assert!(current_bit_read < 8);
-            let current_bit: i8;
             // get the value of the bit in question
-            current_bit = match current_bit_read {
+            let current_bit: i8 = match current_bit_read {
                 0 => value & 0b0000_0001,
                 1 => (value & 0b0000_0010) >> 1,
                 2 => (value & 0b0000_0100) >> 2,
@@ -95,9 +95,7 @@ impl MyBitVector {
                 }
             };
             // update for next loop
-            if current_bit_read != 0 {
-                current_bit_read -= 1;
-            }
+            current_bit_read = current_bit_read.saturating_sub(1);
             // which bit of the byte index should be written into
             let current_bit_write: u32 = (7 - (index % 8)) % 8;
             // write the value into the data vector
@@ -106,37 +104,14 @@ impl MyBitVector {
             // println!("{}: {}", byte_index, self.capacity);
             assert!(byte_index < self.capacity);
             match current_bit_write {
-                0 => {
-                    self.data[byte_index as usize] = self.data[byte_index as usize] | current_bit;
-                }
-                1 => {
-                    self.data[byte_index as usize] =
-                        self.data[byte_index as usize] | (current_bit << 1);
-                }
-                2 => {
-                    self.data[byte_index as usize] =
-                        self.data[byte_index as usize] | (current_bit << 2);
-                }
-                3 => {
-                    self.data[byte_index as usize] =
-                        self.data[byte_index as usize] | (current_bit << 3);
-                }
-                4 => {
-                    self.data[byte_index as usize] =
-                        self.data[byte_index as usize] | (current_bit << 4);
-                }
-                5 => {
-                    self.data[byte_index as usize] =
-                        self.data[byte_index as usize] | (current_bit << 5);
-                }
-                6 => {
-                    self.data[byte_index as usize] =
-                        self.data[byte_index as usize] | (current_bit << 6);
-                }
-                7 => {
-                    self.data[byte_index as usize] =
-                        self.data[byte_index as usize] | (current_bit << 7);
-                }
+                0 => self.data[byte_index as usize] |= current_bit,
+                1 => self.data[byte_index as usize] |= current_bit << 1,
+                2 => self.data[byte_index as usize] |= current_bit << 2,
+                3 => self.data[byte_index as usize] |= current_bit << 3,
+                4 => self.data[byte_index as usize] |= current_bit << 4,
+                5 => self.data[byte_index as usize] |= current_bit << 5,
+                6 => self.data[byte_index as usize] |= current_bit << 6,
+                7 => self.data[byte_index as usize] |= current_bit << 7,
                 _ => panic!("attempted to write to bit {} in u8", current_bit_write),
             }
             // update the byte index
@@ -253,14 +228,14 @@ impl QRData {
             output_data,
             role_data,
             version,
-            error_blocks: error_blocks,
+            error_blocks,
             settings: input,
         }
     }
 
     /// returns the version
     pub fn get_version(&self) -> u8 {
-        self.version as u8
+        self.version
     }
 
     /// returns the witdh
@@ -439,10 +414,10 @@ impl QRData {
                             self.output_data[x][y] = SymbolStatus::LogicalFalse;
                         }
                     } else {
-                        if (x + 1) % 2 == 1 {
-                            self.output_data[x][y] = SymbolStatus::LogicalTrue;
+                        self.output_data[x][y] = if (x + 1) % 2 == 1 {
+                            SymbolStatus::LogicalTrue
                         } else {
-                            self.output_data[x][y] = SymbolStatus::LogicalFalse;
+                            SymbolStatus::LogicalFalse
                         }
                     }
                     self.role_data[x][y] = SymbolRole::TimingPattern;
@@ -529,33 +504,39 @@ impl QRData {
                 logical_true,
             ],
         ];
-        let mut alignment_information: (u8, Vec<u8>) = alignment_pattern_data(self.version);
-        // increase the centres of the alignment patterns by four to compensate for the quiet zone
-        // in the indices
-        for alignment_centre in alignment_information.1.iter_mut() {
-            *alignment_centre += 4;
+        if self.settings.debugging {
+            println!("version: {}", self.version);
         }
-        // first and last element of the alignment centres to avoid drawing into finder patterns
-        let lower_end: u8 = alignment_information.1[0];
-        let upper_end: u8 = alignment_information.1[alignment_information.1.len() - 1];
-        println!("alignment lower: {} upper: {}", lower_end, upper_end);
-        // go over all qr code elements
-        for x in 0..width {
-            for y in 0..width {
-                // go over all rq code elements
-                for x_align in alignment_information.1.iter() {
-                    for y_align in alignment_information.1.iter() {
-                        // don't draw on finder patterns
-                        if !((*x_align == lower_end && *y_align == lower_end)
-                            || (*x_align == upper_end && *y_align == lower_end)
-                            || (*x_align == lower_end && *y_align == upper_end))
-                        {
-                            let x_diff: i32 = *x_align as i32 - x as i32;
-                            let y_diff: i32 = *y_align as i32 - y as i32;
-                            if (x_diff <= 2 && x_diff >= -2) && (y_diff <= 2 && y_diff >= -2) {
-                                self.output_data[x][y] =
-                                    alignment_pattern[(x_diff + 2) as usize][(y_diff + 2) as usize];
-                                self.role_data[x][y] = SymbolRole::AlignmentPattern;
+        if self.version > 1 {
+            let mut alignment_information: (u8, Vec<u8>) = alignment_pattern_data(self.version);
+            // increase the centres of the alignment patterns by four to compensate for the quiet zone
+            // in the indices
+            for alignment_centre in alignment_information.1.iter_mut() {
+                *alignment_centre += 4;
+            }
+            // first and last element of the alignment centres to avoid drawing into finder patterns
+            let lower_end: u8 = alignment_information.1[0];
+            let upper_end: u8 = alignment_information.1[alignment_information.1.len() - 1];
+            println!("alignment lower: {} upper: {}", lower_end, upper_end);
+            // go over all qr code elements
+            for x in 0..width {
+                for y in 0..width {
+                    // go over all rq code elements
+                    for x_align in alignment_information.1.iter() {
+                        for y_align in alignment_information.1.iter() {
+                            // don't draw on finder patterns
+                            if !(((*x_align == upper_end || *x_align == lower_end)
+                                && *y_align == lower_end)
+                                || (*x_align == lower_end && *y_align == upper_end))
+                            {
+                                let x_diff: i32 = *x_align as i32 - x as i32;
+                                let y_diff: i32 = *y_align as i32 - y as i32;
+                                if (-2..=2).contains(&x_diff) && (-2..=2).contains(&y_diff) {
+                                    self.output_data[x][y] = alignment_pattern
+                                        [(x_diff + 2) as usize]
+                                        [(y_diff + 2) as usize];
+                                    self.role_data[x][y] = SymbolRole::AlignmentPattern;
+                                }
                             }
                         }
                     }
@@ -572,8 +553,7 @@ impl QRData {
             for x in 0..width {
                 for y in 0..width {
                     // draw in bottom left
-                    if x >= 4
-                        && x <= 9
+                    if (4..=9).contains(&x)
                         && (y <= (width - 4 - 7 - 1))
                         && (y >= (width - 4 - 7 - 1 - 3))
                         && self.role_data[x][y] != SymbolRole::Separator
@@ -582,8 +562,7 @@ impl QRData {
                     }
                     if (x <= (width - 4 - 7 - 1))
                         && (x >= (width - 4 - 7 - 1 - 3))
-                        && y >= 4
-                        && y <= 9
+                        && (4..=9).contains(&y)
                         && self.role_data[x][y] != SymbolRole::Separator
                     {
                         self.role_data[x][y] = SymbolRole::ReservedVersionInformation;
@@ -629,7 +608,7 @@ impl QRData {
         //     bit_vectors.len()
         // );
         // write mode bits into data
-        assert!(bit_vectors.len() >= 1);
+        assert!(!bit_vectors.is_empty());
         let mut bit_vector_index: usize = 0;
         // add byte mode indicator (for byte mode)
         bit_vectors[bit_vector_index].push(BYTEMODEINDICATOR, 4);
@@ -649,26 +628,19 @@ impl QRData {
             let remaining_capacity: u32 = vector_capacity as u32 - vector_index;
             if remaining_capacity >= CHARACTERBITS as u32 {
                 bit_vectors[bit_vector_index].push(char as i8, CHARACTERBITS);
+            } else if remaining_capacity == 4 {
+                // write what fits into vector
+                bit_vectors[bit_vector_index].push(
+                    (char as i8 & 0b1111_0000_u8 as i8) >> 4,
+                    remaining_capacity as u8,
+                );
+                // increase index
+                bit_vector_index += 1;
+                assert!(bit_vector_index < bit_vectors.len());
+                bit_vectors[bit_vector_index]
+                    .push(char as i8 & 0b0000_1111, remaining_capacity as u8);
             } else {
-                if remaining_capacity == 4 {
-                    // write what fits into vector
-                    bit_vectors[bit_vector_index].push(
-                        (char as i8 & 0b1111_0000_u8 as i8) >> 4,
-                        remaining_capacity as u8,
-                    );
-                    // increase index
-                    bit_vector_index += 1;
-                    // println!(
-                    //     "increased vector index from {} to {}",
-                    //     bit_vector_index - 1,
-                    //     bit_vector_index
-                    // );
-                    assert!(bit_vector_index < bit_vectors.len());
-                    bit_vectors[bit_vector_index]
-                        .push(char as i8 & 0b0000_1111, remaining_capacity as u8);
-                } else {
-                    panic!("remaining capacity wasn't 4, but {}", remaining_capacity);
-                }
+                panic!("remaining capacity wasn't 4, but {}", remaining_capacity);
             }
         }
         assert!(all_blocks.len() == bit_vectors.len());
@@ -692,7 +664,7 @@ impl QRData {
                     divisor = divisor
                         * Polynomial::new(vec![
                             Indeterminate::new(1, 1),
-                            Indeterminate::new((index as i8 + 1) * -1, 0),
+                            Indeterminate::new(-(index as i8 + 1), 0),
                         ]);
                 }
                 let g_of_x: Polynomial = (raw_polynomial
@@ -771,20 +743,25 @@ impl QRData {
                 0..(error_blocks[1].num_data_bytes + error_blocks[1].num_error_bytes) as usize
             {
                 // go over every vector at the current index
-                for block_env in 0..tot_num_blocks {
+                for block_env in all_blocks.iter().enumerate().take(tot_num_blocks) {
                     // if inside the smaller vector
-                    if block_env < (error_blocks[0].num_block - 1) as usize {
+                    if block_env.0 < (error_blocks[0].num_block - 1) as usize {
                         // if past the nonexistent index decrement the read index
-                        if vector_env > index_nonexistent {
-                            final_data_vect.push(all_blocks[block_env][vector_env - 1]);
-                        } else if vector_env < index_nonexistent {
-                            // if before the nonexistent index don't mess with the index
-                            final_data_vect.push(all_blocks[block_env][vector_env]);
+                        match vector_env.cmp(&index_nonexistent) {
+                            Ordering::Greater => {
+                                final_data_vect.push(all_blocks[block_env.0][vector_env - 1])
+                            }
+                            Ordering::Less => {
+                                // if before the nonexistent index don't mess with the index
+                                final_data_vect.push(all_blocks[block_env.0][vector_env]);
+                            }
+                            Ordering::Equal => {
+                                // if at exactly the nonexistent index do nothing
+                            }
                         }
-                        // if at exactly the nonexistent index do nothing
                     } else {
                         // write values in finalvector
-                        final_data_vect.push(all_blocks[block_env][vector_env]);
+                        final_data_vect.push(all_blocks[block_env.0][vector_env]);
                     }
                 }
             }
@@ -815,17 +792,17 @@ impl QRData {
             // if nothing is inside the element yet
             if self.role_data[x_index][y_index] == SymbolRole::Uninitialised {
                 // writing data
-                if ((vector_bit_index / 8) as usize) < final_data_vect.len() {
+                if (vector_bit_index / 8) < final_data_vect.len() {
                     // figure out if the current bit is true or false
                     let element_value: bool = match vector_bit_index % 8 {
-                        0 => (final_data_vect[(vector_bit_index / 8) as usize] & 0b1000_0000) > 0,
-                        1 => (final_data_vect[(vector_bit_index / 8) as usize] & 0b0100_0000) > 0,
-                        2 => (final_data_vect[(vector_bit_index / 8) as usize] & 0b0010_0000) > 0,
-                        3 => (final_data_vect[(vector_bit_index / 8) as usize] & 0b0001_0000) > 0,
-                        4 => (final_data_vect[(vector_bit_index / 8) as usize] & 0b0000_1000) > 0,
-                        5 => (final_data_vect[(vector_bit_index / 8) as usize] & 0b0000_0100) > 0,
-                        6 => (final_data_vect[(vector_bit_index / 8) as usize] & 0b0000_0010) > 0,
-                        7 => (final_data_vect[(vector_bit_index / 8) as usize] & 0b0000_0001) > 0,
+                        0 => (final_data_vect[vector_bit_index / 8] & 0b1000_0000) > 0,
+                        1 => (final_data_vect[vector_bit_index / 8] & 0b0100_0000) > 0,
+                        2 => (final_data_vect[vector_bit_index / 8] & 0b0010_0000) > 0,
+                        3 => (final_data_vect[vector_bit_index / 8] & 0b0001_0000) > 0,
+                        4 => (final_data_vect[vector_bit_index / 8] & 0b0000_1000) > 0,
+                        5 => (final_data_vect[vector_bit_index / 8] & 0b0000_0100) > 0,
+                        6 => (final_data_vect[vector_bit_index / 8] & 0b0000_0010) > 0,
+                        7 => (final_data_vect[vector_bit_index / 8] & 0b0000_0001) > 0,
                         _ => panic!(
                             "wrong bit index in qr code writing {}",
                             vector_bit_index % 8
@@ -892,7 +869,7 @@ impl QRData {
     pub fn version_information(&mut self) {
         let version: u8 = self.version;
         // only version 7 or larger
-        if version >= 7 && version <= 40 {
+        if (7..=40).contains(&version) {
             let bit_stream: u32 = version_info(version);
             // write into lower left
             let mut mask_left: u32 = 2_u32.pow(17);
@@ -922,7 +899,7 @@ impl QRData {
                     break;
                 }
                 // update mask
-                mask_left = mask_left / 2;
+                mask_left /= 2;
 
                 // update the indeces
                 y_index_left -= 1;
@@ -958,7 +935,7 @@ impl QRData {
                     break;
                 }
                 // update mask
-                mask_right = mask_right / 2;
+                mask_right /= 2;
 
                 // update the indeces
                 x_index_right -= 1;
@@ -984,16 +961,12 @@ impl Display for QRData {
                 match self.output_data[column][row] {
                     // color output utilising with ANSI
                     // 105 => bright magenta
-                    SymbolStatus::Uninitialised => {
-                        write!(f, "{}{}{}", BRIGHTMAGENTA, "  ", COLORSTOP)?
-                    }
+                    SymbolStatus::Uninitialised => write!(f, "{}  {}", BRIGHTMAGENTA, COLORSTOP)?,
 
                     // 40 => Black
-                    SymbolStatus::LogicalTrue => write!(f, "{}{}{}", BLACK, "  ", COLORSTOP)?,
+                    SymbolStatus::LogicalTrue => write!(f, "{}  {}", BLACK, COLORSTOP)?,
                     // 107 => Bright White
-                    SymbolStatus::LogicalFalse => {
-                        write!(f, "{}{}{}", BRIGHTWHITE, "  ", COLORSTOP)?
-                    }
+                    SymbolStatus::LogicalFalse => write!(f, "{}  {}", BRIGHTWHITE, COLORSTOP)?,
                 }
             }
             // don't forget the newlines
@@ -1016,41 +989,35 @@ impl Display for QRData {
                 for column in 0..self.role_data[row].len() {
                     match self.role_data[column][row] {
                         // for now all magenta; rest to be implemented
-                        SymbolRole::Uninitialised => {
-                            write!(f, "{}{}{}", BRIGHTMAGENTA, "  ", COLORSTOP)?
-                        }
-                        SymbolRole::QuietZone => write!(f, "{}{}{}", BRIGHTWHITE, "  ", COLORSTOP)?,
-                        SymbolRole::FinderPattern => write!(f, "{}{}{}", WHITE, "  ", COLORSTOP)?,
+                        SymbolRole::Uninitialised => write!(f, "{}  {}", BRIGHTMAGENTA, COLORSTOP)?,
+                        SymbolRole::QuietZone => write!(f, "{}  {}", BRIGHTWHITE, COLORSTOP)?,
+                        SymbolRole::FinderPattern => write!(f, "{}  {}", WHITE, COLORSTOP)?,
                         SymbolRole::AlignmentPattern => {
-                            write!(f, "{}{}{}", BRIGHTBLACK, "  ", COLORSTOP)?
+                            write!(f, "{}  {}", BRIGHTBLACK, COLORSTOP)?
                         }
-                        SymbolRole::TimingPattern => {
-                            write!(f, "{}{}{}", BRIGHTRED, "  ", COLORSTOP)?
-                        }
-                        SymbolRole::Separator => write!(f, "{}{}{}", RED, "  ", COLORSTOP)?,
+                        SymbolRole::TimingPattern => write!(f, "{}  {}", BRIGHTRED, COLORSTOP)?,
+                        SymbolRole::Separator => write!(f, "{}  {}", RED, COLORSTOP)?,
                         SymbolRole::ReservedFormatInformation => {
-                            write!(f, "{}{}{}", MAGENTA, "  ", COLORSTOP)?
+                            write!(f, "{}  {}", MAGENTA, COLORSTOP)?
                         }
                         SymbolRole::FormatInformation => {
-                            write!(f, "{}{}{}", BRIGHTYELLOW, "  ", COLORSTOP)?
+                            write!(f, "{}  {}", BRIGHTYELLOW, COLORSTOP)?
                         }
                         SymbolRole::ReservedVersionInformation => {
-                            write!(f, "{}{}{}", BLUE, "  ", COLORSTOP)?
+                            write!(f, "{}  {}", BLUE, COLORSTOP)?
                         }
                         SymbolRole::VersionInformation => {
-                            write!(f, "{}{}{}", BRIGHTCYAN, "  ", COLORSTOP)?
+                            write!(f, "{}  {}", BRIGHTCYAN, COLORSTOP)?
                         }
-                        SymbolRole::EncodingRegion => {
-                            write!(f, "{}{}{}", BRIGHTBLUE, "  ", COLORSTOP)?
-                        }
+                        SymbolRole::EncodingRegion => write!(f, "{}  {}", BRIGHTBLUE, COLORSTOP)?,
                     }
                 }
                 // don't forget the newlines
-                write!(f, "{}", "\n")?;
+                writeln!(f,)?;
             }
         }
         // end
-        write!(f, "{}", "")
+        write!(f, "")
     }
 }
 

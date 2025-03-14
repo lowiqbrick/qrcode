@@ -33,7 +33,7 @@ impl Display for Indeterminate {
             1 => write!(f, "{}x", self.coefficient)?,
             _ => write!(f, "{}x^{}", self.coefficient, self.degree)?,
         }
-        write!(f, "{}", "")
+        write!(f, "")
     }
 }
 
@@ -78,7 +78,7 @@ impl Polynomial {
             // if not: put it in
             let mut is_in_already: bool = false;
             for y in degrees.iter() {
-                if current_degree == (*y).try_into().unwrap() {
+                if current_degree == (*y) {
                     is_in_already = true;
                 }
             }
@@ -108,7 +108,7 @@ impl Polynomial {
             if indeter.coefficient == 0 {
                 continue;
             } else {
-                catch_zero_coefficients.push(indeter.clone());
+                catch_zero_coefficients.push(*indeter);
             }
         }
         self.function = catch_zero_coefficients.clone();
@@ -127,7 +127,7 @@ impl Display for Polynomial {
             // print the + in front of x
             // - get printed automatically
             if indeterminate.coefficient >= 0 && !is_first_element {
-                write!(f, "{}", "+")?;
+                write!(f, "+")?;
             }
             // write the individual indeterminate
             match indeterminate.degree {
@@ -138,7 +138,7 @@ impl Display for Polynomial {
             is_first_element = false;
         }
         // end
-        write!(f, "{}", "")
+        write!(f, "")
     }
 }
 
@@ -172,8 +172,7 @@ impl Sub for Polynomial {
         // adding them to the polynomial
         for indeterminate in rhs.function.iter() {
             let mut intermediate_help: Indeterminate = *indeterminate;
-            intermediate_help.coefficient =
-                ((indeterminate.coefficient as i16 * -1 as i16) % 256) as i8;
+            intermediate_help.coefficient = (-(indeterminate.coefficient as i16) % 256) as i8;
             help_vector.push(intermediate_help);
         }
         // return the result
@@ -198,7 +197,7 @@ impl Mul for Polynomial {
     type Output = Polynomial;
     fn mul(self, rhs: Self) -> Self::Output {
         // make shure that something is in the vector
-        assert!(rhs.function.len() != 0);
+        assert!(!rhs.function.is_empty());
         // collect all results
         let mut polynomial_collector: Vec<Polynomial> = vec![];
         // multiply an indeterminate with an polynomial
@@ -216,7 +215,7 @@ impl Mul for Polynomial {
         // add all the terms together
         let mut result_var: Polynomial = Polynomial::new(vec![]);
         for polynomial_res in polynomial_collector {
-            if result_var.function.len() == 0 {
+            if result_var.function.is_empty() {
                 result_var.function = polynomial_res.function;
             } else {
                 result_var = result_var + polynomial_res;
@@ -230,10 +229,10 @@ impl Div for Polynomial {
     type Output = Polynomial;
     fn div(self, rhs: Self) -> Self::Output {
         let mut quotient: Vec<Indeterminate> = vec![];
-        if rhs.function.len() == 0 {
+        if rhs.function.is_empty() {
             panic!("tried to divide by polynomial of length zero");
         }
-        if self.function.len() == 0 {
+        if self.function.is_empty() {
             panic!("tried to divide a polynomial of zero length");
         }
         let mut help: Polynomial = rhs.clone();
@@ -250,7 +249,7 @@ impl Div for Polynomial {
             let coefficient_divident: i8 = working_dividend.function[0].coefficient;
             let degree_divident: i16 = working_dividend.function[0].degree;
             let coefficient_factor: i8 = coefficient_divident / coefficient_divisor;
-            let degree_difference: i16 = degree_divident as i16 - degree_divisor as i16;
+            let degree_difference: i16 = degree_divident - degree_divisor;
             // division complete?
             if degree_difference < 0 {
                 return Polynomial::new(quotient).reduce();
@@ -272,7 +271,7 @@ impl Div for Polynomial {
             working_dividend = working_dividend - working_divisor;
             working_dividend.reduce();
             // division complete?
-            if working_dividend.function.len() == 0 {
+            if working_dividend.function.is_empty() {
                 return Polynomial::new(quotient).reduce();
             }
             // println!("new working divident {}", working_dividend);
@@ -303,7 +302,7 @@ impl From<Polynomial> for Vec<i8> {
         let item_copy: Polynomial = item.clone().reduce();
         for var in item_copy.function.iter() {
             assert!(var.coefficient >= 0);
-            return_vec.push(var.coefficient as i8);
+            return_vec.push(var.coefficient);
         }
         return_vec
     }
@@ -317,7 +316,7 @@ mod tests {
 
         let inde1: Indeterminate = Indeterminate::new(3, 2);
         let inde2: Indeterminate = Indeterminate::new(-1, 6);
-        let result2: Indeterminate = inde1.clone() * inde2.clone();
+        let result2: Indeterminate = inde1 * inde2;
         println!("{} multiplied with {} equals {} ", inde1, inde2, result2);
         assert_eq!(result2, Indeterminate::new(-3, 8));
     }

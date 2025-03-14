@@ -1,13 +1,13 @@
-use std::u16;
-
 use crate::input::ErrorLevel;
 
 use super::qr_struct::ErrorBlockInfo;
 
+type VersionInfo = (u8, u16, Vec<(ErrorLevel, Vec<ErrorBlockInfo>)>);
+
 /// delivers a vector containing tuples which contain
 /// (version number, codewords available, error block information)
-pub fn get_error_block_info() -> Vec<(u8, u16, Vec<(ErrorLevel, Vec<ErrorBlockInfo>)>)> {
-    let all_error_info: Vec<(u8, u16, Vec<(ErrorLevel, Vec<ErrorBlockInfo>)>)> = vec![
+pub fn get_error_block_info() -> Vec<VersionInfo> {
+    let all_error_info: Vec<VersionInfo> = vec![
         (
             1,
             26,
@@ -1317,7 +1317,7 @@ pub fn information_sequences(data: u8) -> u16 {
 #[test]
 #[cfg(test)]
 fn sanitycheck_version_information() {
-    let info: Vec<(u8, u16, Vec<(ErrorLevel, Vec<ErrorBlockInfo>)>)> = get_error_block_info();
+    let info: Vec<VersionInfo> = get_error_block_info();
     assert_eq!(info.len(), 40);
     let mut version: i16 = 0;
     let mut size: u16 = 0;
@@ -1354,7 +1354,7 @@ fn sanitycheck_version_information() {
                 panic!();
             }
             // assert that there can't be more than two error blocks per version
-            assert!(memory_case.1.len() <= 2 && memory_case.1.len() > 0);
+            assert!(memory_case.1.len() <= 2 && !memory_case.1.is_empty());
         }
     }
 }

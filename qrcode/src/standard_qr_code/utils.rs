@@ -1,9 +1,9 @@
-use std::u16;
-
 use crate::input::ErrorLevel;
 use crate::standard_qr_code::version_constants::get_error_block_info;
 
 use super::qr_struct::ErrorBlockInfo;
+
+type VersionInfo = (u8, u16, Vec<(ErrorLevel, Vec<ErrorBlockInfo>)>);
 
 /// takes text length and error correction level and returns the reqired version
 /// and the total databytes that can be stored in it
@@ -20,7 +20,7 @@ pub fn get_verison_info(
         panic!();
     }
     let mut search_length: u16 = text_length_complete as u16;
-    let all_info: Vec<(u8, u16, Vec<(ErrorLevel, Vec<ErrorBlockInfo>)>)> = get_error_block_info();
+    let all_info: Vec<VersionInfo> = get_error_block_info();
     // look for the fitting version
     for version in all_info {
         // when the version is 10 or higher the character count indicator has a length of 2 bytes

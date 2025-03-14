@@ -1,3 +1,5 @@
+use std::fmt::{self, Display};
+
 use clap::{Parser, Subcommand, ValueEnum};
 
 /// indicates the level of error correction
@@ -14,13 +16,13 @@ pub enum ErrorLevel {
     H,
 }
 
-impl ToString for ErrorLevel {
-    fn to_string(&self) -> String {
+impl Display for ErrorLevel {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            ErrorLevel::L => String::from("l"),
-            ErrorLevel::M => String::from("m"),
-            ErrorLevel::Q => String::from("q"),
-            ErrorLevel::H => String::from("h"),
+            ErrorLevel::L => write!(f, "l"),
+            ErrorLevel::M => write!(f, "m"),
+            ErrorLevel::Q => write!(f, "q"),
+            ErrorLevel::H => write!(f, "h"),
         }
     }
 }

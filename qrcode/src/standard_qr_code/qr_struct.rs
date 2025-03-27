@@ -766,6 +766,9 @@ impl QRData {
         // let max_index: usize = width - 1;
         // get the data
         let data: String = self.settings.information.clone();
+        if self.settings.debugging {
+            println!("encoded data: {data}");
+        }
         // get info on the error blocks
         let error_blocks: Vec<ErrorBlockInfo> = self.error_blocks.clone();
         // println!("error blocks: {:?}", error_blocks);
@@ -790,11 +793,13 @@ impl QRData {
                 bit_vectors.push(MyBitVector::new_with_capacity(block.num_data_bytes.into()));
             }
         }
-        // println!(
-        //     "bit vectors: {:?} (length {})",
-        //     bit_vectors,
-        //     bit_vectors.len()
-        // );
+        if self.settings.debugging {
+            println!(
+                "bit vectors: {:?} (length {})",
+                bit_vectors,
+                bit_vectors.len()
+            );
+        }
         // write mode bits into data
         assert!(!bit_vectors.is_empty());
         let mut bit_vector_index: usize = 0;
@@ -831,6 +836,13 @@ impl QRData {
                 panic!("remaining capacity wasn't 4, but {}", remaining_capacity);
             }
         }
+        if self.settings.debugging {
+            println!(
+                "bit vectors: {:?} (length {})",
+                bit_vectors,
+                bit_vectors.len()
+            );
+        }
         assert!(all_blocks.len() == bit_vectors.len());
         // convert the datavectors, so that they
         // also contain the error correction numbers
@@ -863,12 +875,12 @@ impl QRData {
                     all_blocks[vector_index as usize].push(values.get_coefficient() as u8);
                 }
                 if self.settings.debugging {
-                    // println!(
-                    //     "data with error correction: {}\nas vector (len {}): {:?}",
-                    //     data_final,
-                    //     all_blocks[vector_index as usize].len(),
-                    //     all_blocks[vector_index as usize]
-                    // );
+                    println!(
+                        "data with error correction: {}\nas vector (len {}): {:?}",
+                        data_final,
+                        all_blocks[vector_index as usize].len(),
+                        all_blocks[vector_index as usize]
+                    );
                 }
                 vector_index += 1;
             }

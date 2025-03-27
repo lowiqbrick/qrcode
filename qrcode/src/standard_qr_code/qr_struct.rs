@@ -703,7 +703,9 @@ impl QRData {
             // first and last element of the alignment centres to avoid drawing into finder patterns
             let lower_end: u8 = alignment_information.1[0];
             let upper_end: u8 = alignment_information.1[alignment_information.1.len() - 1];
-            println!("alignment lower: {} upper: {}", lower_end, upper_end);
+            if self.settings.debugging {
+                println!("alignment lower: {} upper: {}", lower_end, upper_end);
+            }
             // go over all qr code elements
             for x in 0..width {
                 for y in 0..width {
@@ -966,10 +968,12 @@ impl QRData {
         let mut vector_bit_index: usize = 0;
         let mut x_index: usize = self.output_data.len() - 1 - 4;
         let mut y_index: usize = self.output_data.len() - 1 - 4;
-        println!(
-            "starting indices for writing\nx: {}\ny: {}",
-            x_index, y_index
-        );
+        if self.settings.debugging {
+            println!(
+                "starting indices for writing\nx: {}\ny: {}",
+                x_index, y_index
+            );
+        }
         let mut is_y_shrinking: bool = true;
         let mut is_right: bool = true;
         // go througth all elements of the qr code and write data into
@@ -1002,7 +1006,9 @@ impl QRData {
                 } else {
                     // if all data is written fill the remaining data in the code with logical false
                     self.output_data[x_index][y_index] = SymbolStatus::LogicalFalse;
-                    println!("wrote filler false");
+                    if self.settings.debugging {
+                        println!("wrote filler false");
+                    }
                 }
                 self.role_data[x_index][y_index] = SymbolRole::EncodingRegion;
 

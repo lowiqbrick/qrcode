@@ -79,4 +79,8 @@ pub fn qr_code(input: Settings) {
             println!("    {:?}", error_block);
         }
     }
+    // actually display the qrcode
+    if !qrdata.get_settings().debugging {
+        println!("{qrdata}");
+    }
 }

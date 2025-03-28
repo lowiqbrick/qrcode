@@ -43,6 +43,91 @@ struct MyBitVector {
     data: Vec<i8>,
 }
 
+impl Display for MyBitVector {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+        let mut bytes_left = self.data.len();
+        for byte in self.data.iter() {
+            write!(
+                f,
+                "{}",
+                if (byte & 0b1000_0000u8 as i8) > 0 {
+                    1
+                } else {
+                    0
+                }
+            )?;
+            write!(
+                f,
+                "{}",
+                if (byte & 0b0100_0000u8 as i8) > 0 {
+                    1
+                } else {
+                    0
+                }
+            )?;
+            write!(
+                f,
+                "{}",
+                if (byte & 0b0010_0000u8 as i8) > 0 {
+                    1
+                } else {
+                    0
+                }
+            )?;
+            write!(
+                f,
+                "{}_",
+                if (byte & 0b0001_0000u8 as i8) > 0 {
+                    1
+                } else {
+                    0
+                }
+            )?;
+            write!(
+                f,
+                "{}",
+                if (byte & 0b0000_1000u8 as i8) > 0 {
+                    1
+                } else {
+                    0
+                }
+            )?;
+            write!(
+                f,
+                "{}",
+                if (byte & 0b0000_0100u8 as i8) > 0 {
+                    1
+                } else {
+                    0
+                }
+            )?;
+            write!(
+                f,
+                "{}",
+                if (byte & 0b0000_0010u8 as i8) > 0 {
+                    1
+                } else {
+                    0
+                }
+            )?;
+            write!(
+                f,
+                "{}",
+                if (byte & 0b0000_0001u8 as i8) > 0 {
+                    1
+                } else {
+                    0
+                }
+            )?;
+            bytes_left -= 1;
+            if bytes_left != 0 {
+                write!(f, " ")?;
+            }
+        }
+        write!(f, "")
+    }
+}
+
 impl MyBitVector {
     /// generates new struct with max_size bytes
     fn new_with_capacity(max_size: u16) -> MyBitVector {
@@ -771,7 +856,9 @@ impl QRData {
         }
         // get info on the error blocks
         let error_blocks: Vec<ErrorBlockInfo> = self.error_blocks.clone();
-        // println!("error blocks: {:?}", error_blocks);
+        if self.settings.debugging {
+            println!("error blocks: {:?}", error_blocks);
+        }
         // create vector to contain the errorblock data
         let mut all_blocks: Vec<Vec<u8>> = vec![];
         let mut tot_num_blocks: usize = 0;
@@ -789,7 +876,9 @@ impl QRData {
         let mut bit_vectors: Vec<MyBitVector> = vec![];
         for block in error_blocks.iter() {
             for _ in 0..block.num_block {
-                // println!("num data bytes: {}", block.num_data_bytes);
+                if self.settings.debugging {
+                    println!("num data bytes: {}", block.num_data_bytes);
+                }
                 bit_vectors.push(MyBitVector::new_with_capacity(block.num_data_bytes.into()));
             }
         }
@@ -799,6 +888,9 @@ impl QRData {
                 bit_vectors,
                 bit_vectors.len()
             );
+            for vector in bit_vectors.iter() {
+                println!("{}", vector);
+            }
         }
         // write mode bits into data
         assert!(!bit_vectors.is_empty());
@@ -842,13 +934,16 @@ impl QRData {
                 bit_vectors,
                 bit_vectors.len()
             );
+            for vector in bit_vectors.iter() {
+                println!("{}", vector);
+            }
         }
         assert!(all_blocks.len() == bit_vectors.len());
         // convert the datavectors, so that they
         // also contain the error correction numbers
         let mut vector_index: u8 = 0;
         if self.settings.debugging {
-            // println!("individual error blocks:");
+            println!("individual error blocks:");
         }
         for block in error_blocks.iter() {
             // go through all block repetitions

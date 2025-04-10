@@ -48,7 +48,7 @@ impl MyBitVector {
         for element in self.data.iter() {
             print!("{:#x} ", *element as u8);
         }
-        print!("(hex)");
+        println!("(hex)");
     }
 }
 

@@ -41,7 +41,7 @@ impl Mul for Indeterminate {
     type Output = Indeterminate;
     fn mul(self, rhs: Self) -> Self::Output {
         Indeterminate::new(
-            ((self.coefficient as i16 * rhs.coefficient as i16) % 256) as i8,
+            ((self.coefficient as i16 * rhs.coefficient as i16) & 0x00_00_FF_FF_u16 as i16) as i8,
             self.degree + rhs.degree,
         )
     }

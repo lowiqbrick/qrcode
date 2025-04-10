@@ -451,20 +451,31 @@ mod tests {
     // https://www.youtube.com/watch?v=w5ebcowAJD8
     fn calculate_a_b() {
         use super::{Indeterminate, Polynomial};
-        let poly1: Polynomial = Polynomial::new(vec![
+        let final_poly_without_a_b: Polynomial = Polynomial::new(vec![
             Indeterminate::new(1, 5),
             Indeterminate::new(-2, 4),
             Indeterminate::new(3, 3),
             Indeterminate::new(5, 2),
         ]);
-        let poly2: Polynomial =
+        let error_correction_x1_x2: Polynomial =
             Polynomial::new(vec![Indeterminate::new(1, 1), Indeterminate::new(-1, 0)])
                 * Polynomial::new(vec![Indeterminate::new(1, 1), Indeterminate::new(-2, 0)]);
-        let quotient: Polynomial = poly1.clone() / poly2.clone();
-        println!("{} divided by {} equals {}", poly1, poly2, quotient);
-        let mut a_b_term: Polynomial = (quotient.clone() * poly2.clone()) - poly1.clone();
+        println!("original polynom: {}", final_poly_without_a_b);
+        println!("error correction term: {}", error_correction_x1_x2);
+        let start_with_a_b_extracted: Polynomial =
+            final_poly_without_a_b.clone() / error_correction_x1_x2.clone();
+        println!(
+            "{} divided by {} equals {}",
+            final_poly_without_a_b, error_correction_x1_x2, start_with_a_b_extracted
+        );
+        let mut a_b_term: Polynomial = (start_with_a_b_extracted.clone()
+            * error_correction_x1_x2.clone())
+            - final_poly_without_a_b.clone();
         a_b_term.reduce();
-        println!("the complete term is {}", quotient.clone() * poly2.clone());
+        println!(
+            "the complete term is {}",
+            start_with_a_b_extracted.clone() * error_correction_x1_x2.clone()
+        );
         println!(
             "the term for a and b is {} and the resulting values are: a={}, b={}",
             a_b_term, a_b_term.function[0].coefficient, a_b_term.function[1].coefficient

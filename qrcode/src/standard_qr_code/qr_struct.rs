@@ -43,6 +43,15 @@ struct MyBitVector {
     data: Vec<i8>,
 }
 
+impl MyBitVector {
+    pub fn print_hex(&self) {
+        for element in self.data.iter() {
+            print!("{:#x} ", *element as u8);
+        }
+        print!("(hex)");
+    }
+}
+
 impl Display for MyBitVector {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
         let mut bytes_left = self.data.len();
@@ -889,6 +898,9 @@ impl QRData {
                 bit_vectors.len()
             );
             for vector in bit_vectors.iter() {
+                vector.print_hex();
+            }
+            for vector in bit_vectors.iter() {
                 println!("{}", vector);
             }
         }
@@ -934,6 +946,9 @@ impl QRData {
                 bit_vectors,
                 bit_vectors.len()
             );
+            for vector in bit_vectors.iter() {
+                vector.print_hex();
+            }
             for vector in bit_vectors.iter() {
                 println!("{}", vector);
             }
@@ -1070,6 +1085,10 @@ impl QRData {
         assert!(final_data_vect.len() == tot_num_codewords);
         if self.settings.debugging {
             println!("data in final vector: {:?}", final_data_vect);
+            for element in final_data_vect.iter() {
+                print!("{:#x} ", element)
+            }
+            println!();
         }
         // write all data into the actual QR code
         let mut vector_bit_index: usize = 0;

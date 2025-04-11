@@ -96,13 +96,13 @@ impl Polynomial {
             let mut degree_coefficient: i8 = 0;
             for z in self.function.iter() {
                 if *degree == z.degree {
-                    degree_coefficient =
-                        ((degree_coefficient as i16 + z.coefficient as i16) % 256) as i8;
+                    degree_coefficient = ((degree_coefficient as i16 + z.coefficient as i16)
+                        & 0x00_00_FF_FF_u16 as i16) as i8;
                 }
             }
             result.push(Indeterminate::new(degree_coefficient, *degree));
         }
-        // delete terms that have a coefficient equal zero
+        // delete terms that have a coefficient equal to zero
         let mut catch_zero_coefficients: Vec<Indeterminate> = vec![];
         for indeter in result.iter() {
             if indeter.coefficient == 0 {
@@ -168,11 +168,12 @@ impl Sub for Polynomial {
         // before it is added, thus subtracting it
         // get current values
         let mut help_vector: Vec<Indeterminate> = self.function;
-        // add indeterminates from right hand side rhs
+        // subtract indeterminates from right hand side rhs
         // adding them to the polynomial
         for indeterminate in rhs.function.iter() {
             let mut intermediate_help: Indeterminate = *indeterminate;
-            intermediate_help.coefficient = (-(indeterminate.coefficient as i16) % 256) as i8;
+            intermediate_help.coefficient =
+                (-(indeterminate.coefficient as i16) & 0x00_00_FF_FF_u16 as i16) as i8;
             help_vector.push(intermediate_help);
         }
         // return the result

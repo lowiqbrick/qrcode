@@ -861,7 +861,7 @@ impl QRData {
         // get the data
         let data: String = self.settings.information.clone();
         if self.settings.debugging {
-            println!("encoded data: {data}");
+            println!("encoded data: {data} (length {})", data.len());
         }
         // get info on the error blocks
         let error_blocks: Vec<ErrorBlockInfo> = self.error_blocks.clone();
@@ -965,7 +965,14 @@ impl QRData {
             for _ in 0..block.num_block {
                 // go through all data vectors
                 let raw_polynomial: Polynomial =
-                    Polynomial::from(bit_vectors[vector_index as usize].get_data());
+                    Polynomial::from(bit_vectors[vector_index as usize].get_data())
+                        * Polynomial::new(vec![Indeterminate::new(
+                            1,
+                            block.num_error_bytes as i16,
+                        )]);
+                if self.settings.debugging {
+                    println!("polynomial befor error calculation: {}", raw_polynomial);
+                }
                 // create the divisor
                 // insert x-1 as a jumping of point
                 let mut divisor: Polynomial =
@@ -977,9 +984,10 @@ impl QRData {
                             Indeterminate::new(-(index as i8 + 1), 0),
                         ]);
                 }
-                let g_of_x: Polynomial = (raw_polynomial
-                    * Polynomial::new(vec![Indeterminate::new(1, block.num_error_bytes as i16)]))
-                    / divisor.clone();
+                if self.settings.debugging {
+                    println!("error correction polynimial: {}", divisor);
+                }
+                let g_of_x: Polynomial = raw_polynomial / divisor.clone();
                 let data_final: Polynomial = g_of_x.clone() * divisor;
                 for values in data_final.clone().into_iter() {
                     all_blocks[vector_index as usize].push(values.get_coefficient() as u8);
@@ -1038,6 +1046,7 @@ impl QRData {
                     vector_index += 1;
                 }
                 if sanity_loop > 3706 {
+                    eprintln!("emergency loop abort triggered");
                     break;
                 } else {
                     sanity_loop += 1;
@@ -1084,7 +1093,11 @@ impl QRData {
         // everything was written?
         assert!(final_data_vect.len() == tot_num_codewords);
         if self.settings.debugging {
-            println!("data in final vector: {:?}", final_data_vect);
+            println!(
+                "data in final vector: {:?} (length {})",
+                final_data_vect,
+                final_data_vect.len()
+            );
             for element in final_data_vect.iter() {
                 print!("{:#x} ", element)
             }

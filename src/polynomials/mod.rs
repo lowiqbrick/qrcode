@@ -115,6 +115,15 @@ impl Polynomial {
         Polynomial { function: result }
     }
 
+    /// Calculates the value of a polynomial for a given value x. For testing purposes only.
+    fn _f(&self, x: i8) -> i16 {
+        let mut f_of_x = 0;
+        for element in self.function.clone().iter() {
+            f_of_x += element.coefficient as i16 * (x.pow(element.degree as u32) as i16);
+        }
+        f_of_x
+    }
+
     pub fn push(&mut self, element: Indeterminate) {
         self.function.push(element);
     }
@@ -472,6 +481,7 @@ mod tests {
         let mut a_b_term: Polynomial = (start_with_a_b_extracted.clone()
             * error_correction_x1_x2.clone())
             - final_poly_without_a_b.clone();
+        let final_poly = start_with_a_b_extracted.clone() * error_correction_x1_x2.clone();
         a_b_term.reduce();
         println!(
             "the complete term is {}",
@@ -485,6 +495,9 @@ mod tests {
             a_b_term,
             Polynomial::new(vec![Indeterminate::new(-37, 1), Indeterminate::new(30, 0)])
         );
+        // assert that the function zero point is calculated correctly
+        assert_eq!(final_poly._f(1), 0);
+        assert_eq!(final_poly._f(2), 0);
     }
 
     #[test]

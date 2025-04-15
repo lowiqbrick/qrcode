@@ -999,6 +999,11 @@ impl QRData {
                         all_blocks[vector_index as usize].len(),
                         all_blocks[vector_index as usize]
                     );
+                    print!("as hex: ");
+                    for value in all_blocks.iter() {
+                        print!("{:x?}", value);
+                    }
+                    println!();
                 }
                 vector_index += 1;
             }

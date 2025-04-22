@@ -146,7 +146,7 @@ fn test_values_m_4() {
     let mut correct_map = HashMap::new();
     correct_map.insert(0, BFBeginning::_Zero);
     correct_map.insert(1, BFBeginning::_One);
-    correct_map.insert(2, BFBeginning::_Other(0b0000_u8));
+    correct_map.insert(2, BFBeginning::_Other(0b0001_u8));
     correct_map.insert(3, BFBeginning::_Other(0b0010_u8));
     correct_map.insert(4, BFBeginning::_Other(0b0100_u8));
     correct_map.insert(5, BFBeginning::_Other(0b1000_u8));

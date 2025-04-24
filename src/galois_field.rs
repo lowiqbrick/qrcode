@@ -85,6 +85,34 @@ impl GaloisFields {
             galois_table: res_map,
         }
     }
+
+    pub fn get_alpha(&self, alpha_indice: u8) -> u8 {
+        // compensate the frost two elements 0 and 1 in the galois field
+        let indice = alpha_indice + 2;
+        assert!(self.galois_table.len() >= (indice as usize));
+        // get value
+        if let Some(alpha) = self.galois_table.get(&indice) {
+            *alpha
+        } else {
+            panic!("key {} wasn't in hashmap {:?}", indice, self.galois_table);
+        }
+    }
+    /// meant to be used on a galosi field of m=8 and Polynomial x^4+x^3+x^2+1
+    pub fn correction_polynomial(&self, num_error_corr: u8) -> Option<Polynomial> {
+        match num_error_corr {
+            7 => Some(Polynomial::new(vec![
+                Indeterminate::new(1, 7),
+                Indeterminate::new(self.get_alpha(87) as i8, 6),
+                Indeterminate::new(self.get_alpha(229) as i8, 5),
+                Indeterminate::new(self.get_alpha(146) as i8, 4),
+                Indeterminate::new(self.get_alpha(149) as i8, 3),
+                Indeterminate::new(self.get_alpha(238) as i8, 2),
+                Indeterminate::new(self.get_alpha(102) as i8, 1),
+                Indeterminate::new(self.get_alpha(21) as i8, 0),
+            ])),
+            _ => None,
+        }
+    }
 }
 
 impl Display for GaloisFields {

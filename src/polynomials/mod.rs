@@ -23,6 +23,10 @@ impl Indeterminate {
     pub fn get_coefficient(&self) -> i8 {
         self.coefficient
     }
+
+    pub fn get_degree(&self) -> i16 {
+        self.degree
+    }
 }
 
 impl Display for Indeterminate {
@@ -126,6 +130,10 @@ impl Polynomial {
 
     pub fn push(&mut self, element: Indeterminate) {
         self.function.push(element);
+    }
+
+    pub fn get_function(&self) -> Vec<Indeterminate> {
+        self.function.clone()
     }
 }
 

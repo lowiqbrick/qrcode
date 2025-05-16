@@ -46,7 +46,7 @@ struct MyBitVector {
 impl MyBitVector {
     pub fn print_hex(&self) {
         for element in self.data.iter() {
-            print!("{:#x} ", *element as u8);
+            print!("{:02x} ", *element as u8);
         }
         println!("(hex)");
     }
@@ -1104,7 +1104,7 @@ impl QRData {
                 final_data_vect.len()
             );
             for element in final_data_vect.iter() {
-                print!("{:#x} ", element)
+                print!("{:02x} ", element)
             }
             println!();
         }

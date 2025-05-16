@@ -1,11 +1,7 @@
 /// based on "Tutorial on Reed-Solomon Error Correction Coding" by William A. Geisel (August 1990)
 /// https://ntrs.nasa.gov/api/citations/19900019023/downloads/19900019023.pdf
 /// (last viewed 17.04.2025)
-use std::{
-    cmp::Ordering,
-    collections::HashMap,
-    fmt::{write, Display},
-};
+use std::{cmp::Ordering, collections::HashMap, fmt::Display};
 
 use crate::polynomials::Indeterminate;
 
@@ -19,7 +15,7 @@ pub struct GaloisFields {
 }
 
 impl GaloisFields {
-    pub fn new(m: u8, mod_fx: Polynomial) -> Self {
+    pub fn _new(m: u8, mod_fx: Polynomial) -> Self {
         assert!(m > 0);
         assert!(m <= 8);
         let mut res_map = HashMap::new();
@@ -86,7 +82,7 @@ impl GaloisFields {
         }
     }
 
-    pub fn get_alpha(&self, alpha_indice: u8) -> u8 {
+    pub fn _get_alpha(&self, alpha_indice: u8) -> u8 {
         // compensate the frost two elements 0 and 1 in the galois field
         let indice = alpha_indice + 2;
         assert!(self.galois_table.len() >= (indice as usize));
@@ -98,17 +94,17 @@ impl GaloisFields {
         }
     }
     /// meant to be used on a galosi field of m=8 and Polynomial x^4+x^3+x^2+1
-    pub fn correction_polynomial(&self, num_error_corr: u8) -> Option<Polynomial> {
+    pub fn _correction_polynomial(&self, num_error_corr: u8) -> Option<Polynomial> {
         match num_error_corr {
             7 => Some(Polynomial::new(vec![
                 Indeterminate::new(1, 7),
-                Indeterminate::new(self.get_alpha(87) as i8, 6),
-                Indeterminate::new(self.get_alpha(229) as i8, 5),
-                Indeterminate::new(self.get_alpha(146) as i8, 4),
-                Indeterminate::new(self.get_alpha(149) as i8, 3),
-                Indeterminate::new(self.get_alpha(238) as i8, 2),
-                Indeterminate::new(self.get_alpha(102) as i8, 1),
-                Indeterminate::new(self.get_alpha(21) as i8, 0),
+                Indeterminate::new(self._get_alpha(87) as i8, 6),
+                Indeterminate::new(self._get_alpha(229) as i8, 5),
+                Indeterminate::new(self._get_alpha(146) as i8, 4),
+                Indeterminate::new(self._get_alpha(149) as i8, 3),
+                Indeterminate::new(self._get_alpha(238) as i8, 2),
+                Indeterminate::new(self._get_alpha(102) as i8, 1),
+                Indeterminate::new(self._get_alpha(21) as i8, 0),
             ])),
             _ => None,
         }
@@ -152,7 +148,7 @@ impl Display for GaloisFields {
 // TODO remove debugging test
 #[test]
 fn test_values_m_4() {
-    let example = GaloisFields::new(
+    let example = GaloisFields::_new(
         4,
         Polynomial::new(vec![Indeterminate::new(1, 1), Indeterminate::new(1, 0)]),
     );

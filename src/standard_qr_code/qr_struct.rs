@@ -854,33 +854,36 @@ impl QRData {
         }
     }
 
-    /// reads the text from self.settings and write it into the qr code
-    pub fn read_and_write(&mut self) {
-        // let width: usize = self.get_width();
-        // let max_index: usize = width - 1;
-        // get the data
-        let data: String = self.settings.information.clone();
-        if self.settings.debugging {
-            println!("encoded data: {data} (length {})", data.len());
-        }
-        // get info on the error blocks
+    /// get all information required for the processing of the data down the road
+    fn generate_error_blocks(&self) -> (Vec<ErrorBlockInfo>, Vec<Vec<u8>>, usize, usize) {
         let error_blocks: Vec<ErrorBlockInfo> = self.error_blocks.clone();
         if self.settings.debugging {
             println!("error blocks: {:?}", error_blocks);
         }
         // create vector to contain the errorblock data
         let mut all_blocks: Vec<Vec<u8>> = vec![];
-        let mut tot_num_blocks: usize = 0;
-        let mut tot_num_codewords: usize = 0;
+        let mut _tot_num_blocks: usize = 0;
+        let mut _tot_num_codewords: usize = 0;
         for block in error_blocks.iter() {
             for _ in 0..block.num_block {
                 all_blocks.push(vec![]);
-                tot_num_blocks += 1;
-                tot_num_codewords += (block.num_data_bytes + block.num_error_bytes) as usize;
+                _tot_num_blocks += 1;
+                _tot_num_codewords += (block.num_data_bytes + block.num_error_bytes) as usize;
             }
         }
+        (
+            error_blocks,
+            all_blocks,
+            _tot_num_blocks,
+            _tot_num_codewords,
+        )
+    }
 
-        // write all data into the error block vector
+    /// all the data that should be written into the qrcode is taken from the struct and inserted into
+    /// a custom struct, that allows easier processing later
+    fn write_data_into_vectors(&self, error_blocks: &[ErrorBlockInfo]) -> Vec<MyBitVector> {
+        // get the data
+        let data: String = self.settings.information.clone();
         // create MyBitVectors to write data into
         let mut bit_vectors: Vec<MyBitVector> = vec![];
         for block in error_blocks.iter() {
@@ -953,9 +956,15 @@ impl QRData {
                 println!("{}", vector);
             }
         }
-        assert!(all_blocks.len() == bit_vectors.len());
-        // convert the datavectors, so that they
-        // also contain the error correction numbers
+        bit_vectors
+    }
+
+    fn generate_error_corrction(
+        &self,
+        error_blocks: &[ErrorBlockInfo],
+        all_blocks: &mut [Vec<u8>],
+        bit_vectors: &[MyBitVector],
+    ) {
         let mut vector_index: u8 = 0;
         if self.settings.debugging {
             println!("individual error blocks:");
@@ -1010,10 +1019,19 @@ impl QRData {
         }
         if self.settings.debugging {
             println!("all values:");
-            for data_printout in all_blocks.clone().iter() {
+            for data_printout in all_blocks.iter() {
                 println!("{:?}", data_printout);
             }
         }
+    }
+
+    fn shuffle_bit_vectors(
+        &self,
+        error_blocks: &[ErrorBlockInfo],
+        all_blocks: &[Vec<u8>],
+        tot_num_blocks: usize,
+        tot_num_codewords: usize,
+    ) -> Vec<u8> {
         // write the data into one vector that contains all data to be written into the code
         // adhering to the construction of the final message codeword sequence
         // Block 1      D1 | D2 | ..... D11|      E1 | E2 | ..... E22|
@@ -1108,6 +1126,11 @@ impl QRData {
             }
             println!();
         }
+        final_data_vect
+    }
+
+    /// write all data into the QR code struct
+    fn write_into_self(&mut self, final_data_vect: &[u8]) {
         // write all data into the actual QR code
         let mut vector_bit_index: usize = 0;
         let mut x_index: usize = self.output_data.len() - 1 - 4;
@@ -1200,6 +1223,39 @@ impl QRData {
             }
             // println!("x: {}; y: {}", x_index, y_index);
         }
+    }
+
+    /// reads the text from self.settings and write it into the qr code
+    pub fn read_and_write(&mut self) {
+        // let width: usize = self.get_width();
+        // let max_index: usize = width - 1;
+        // get the data
+        let data: String = self.settings.information.clone();
+        if self.settings.debugging {
+            println!("encoded data: {data} (length {})", data.len());
+        }
+
+        // get info in the error blocks
+        let (error_blocks, mut all_blocks, tot_num_blocks, tot_num_codewords) =
+            self.generate_error_blocks();
+
+        // write all data into the error block vector
+        let bit_vectors: Vec<MyBitVector> = self.write_data_into_vectors(&error_blocks);
+        assert!(all_blocks.len() == bit_vectors.len());
+
+        // convert the datavectors, so that they
+        // also contain the error correction numbers
+        self.generate_error_corrction(&error_blocks, &mut all_blocks, &bit_vectors);
+
+        // all vectors get shuffeled around to spread all information across the qrcode
+        let final_data_vect = self.shuffle_bit_vectors(
+            &error_blocks,
+            &all_blocks,
+            tot_num_blocks,
+            tot_num_codewords,
+        );
+
+        self.write_into_self(&final_data_vect);
     }
 
     pub fn version_information(&mut self) {

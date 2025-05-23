@@ -1427,10 +1427,9 @@ impl QRData {
         working_copy
     }
 
-    fn calculate_penalty(&self) -> u32 {
-        // based on https://www.thonky.com/qr-code-tutorial/data-masking (14.03.2025)
-        let mut total_score = 0;
-        // condition #1
+    // calculates the penalty score for consecutive elements of the same color
+    fn penalty_consecutive_same_color(&self) -> u32 {
+        let mut penalty_consecuetive_same_color = 0;
         // multiple consecutive elements of the same color
         let low_index = 4;
         let high_index = self.output_data.len() - 4;
@@ -1442,8 +1441,8 @@ impl QRData {
                 if self.output_data[x][y] == former_status {
                     consecutive_counter += 1;
                     match consecutive_counter.cmp(&5) {
-                        Ordering::Equal => total_score += 3,
-                        Ordering::Greater => total_score += 1,
+                        Ordering::Equal => penalty_consecuetive_same_color += 3,
+                        Ordering::Greater => penalty_consecuetive_same_color += 1,
                         Ordering::Less => (),
                     }
                 } else {
@@ -1460,8 +1459,8 @@ impl QRData {
                 if self.output_data[x][y] == former_status {
                     consecutive_counter += 1;
                     match consecutive_counter.cmp(&5) {
-                        Ordering::Equal => total_score += 3,
-                        Ordering::Greater => total_score += 1,
+                        Ordering::Equal => penalty_consecuetive_same_color += 3,
+                        Ordering::Greater => penalty_consecuetive_same_color += 1,
                         Ordering::Less => (),
                     }
                 } else {
@@ -1470,7 +1469,14 @@ impl QRData {
                 }
             }
         }
-        // condition #2
+        penalty_consecuetive_same_color
+    }
+
+    // calculates the penalty score for 2x2 blocks of the same color
+    fn penalty_color_blocks(&self) -> u32 {
+        let mut penalty_color_blocks = 0;
+        let low_index = 4;
+        let high_index = self.output_data.len() - 4;
         // blocks of the same color
         for x in low_index..high_index - 1 {
             for y in low_index..high_index - 1 {
@@ -1479,11 +1485,18 @@ impl QRData {
                     && self.output_data[x][y] == self.output_data[x][y + 1]
                     && self.output_data[x][y] == self.output_data[x + 1][y + 1]
                 {
-                    total_score += 3;
+                    penalty_color_blocks += 3;
                 }
             }
         }
-        // condition #3
+        penalty_color_blocks
+    }
+
+    // calculates the penalty score for possible finder patterns in the generated code
+    fn penalty_finder_patterns(&self) -> u32 {
+        let mut penalty_finder_patterns = 0;
+        let low_index = 4;
+        let high_index = self.output_data.len() - 4;
         // sequences that are similar to the finder pattern
         let pattern1 = [
             SymbolStatus::LogicalTrue,
@@ -1523,7 +1536,7 @@ impl QRData {
                 if element_vector.len() == 11
                     && (element_vector == pattern1 || element_vector == pattern2)
                 {
-                    total_score += 40;
+                    penalty_finder_patterns += 40;
                 }
             }
         }
@@ -1539,11 +1552,18 @@ impl QRData {
                 if element_vector.len() == 11
                     && (element_vector == pattern1 || element_vector == pattern2)
                 {
-                    total_score += 40;
+                    penalty_finder_patterns += 40;
                 }
             }
         }
-        // condition #4
+        penalty_finder_patterns
+    }
+
+    // calculates the penalty score for the ratios of black and/or white elements
+    fn penalty_color_ratios(&self) -> u32 {
+        let mut penalty_color_ratios = 0;
+        let low_index = 4;
+        let high_index = self.output_data.len() - 4;
         // ratio of black to white elements
         let total_elements = (high_index - low_index) * (high_index - low_index);
         let mut total_black = 0;
@@ -1559,10 +1579,30 @@ impl QRData {
         let dark_result1 = (dark_floor - 50.0).abs() / 5.0;
         let dark_result2 = ((dark_floor + 5.0) - 50.0).abs() / 5.0;
         if dark_result1 >= dark_result2 {
-            total_score += dark_result2 as u32 * 10;
+            penalty_color_ratios += dark_result2 as u32 * 10;
         } else {
-            total_score *= dark_result1 as u32 * 10;
+            penalty_color_ratios *= dark_result1 as u32 * 10;
         }
+        penalty_color_ratios
+    }
+
+    /// calulates the penalty score of a qr code based on:
+    /// consecutive elements of the same color,
+    /// 2x2 blocks of the same color,
+    /// possible finder patterns in the generated code
+    /// and the ratios of black and/or white elements
+    fn calculate_penalty(&self) -> u32 {
+        // based on https://www.thonky.com/qr-code-tutorial/data-masking (14.03.2025)
+        let mut total_score = 0;
+        // condition #1
+        total_score += self.penalty_consecutive_same_color();
+        // condition #2
+        total_score += self.penalty_color_blocks();
+        // condition #3
+        total_score += self.penalty_finder_patterns();
+        // condition #4
+        total_score += self.penalty_color_ratios();
+        // summ of all penalties
         total_score
     }
 

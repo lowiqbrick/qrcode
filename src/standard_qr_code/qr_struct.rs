@@ -534,6 +534,10 @@ impl QRData {
 
     // draws the quiet zone around the code
     pub fn quiet_zone(&mut self) {
+        if self.get_settings().debugging {
+            println!("default initialisation of the data");
+            print!("{}", self);
+        }
         let width: usize = self.output_data.len();
         for x in 0..width {
             for y in 0..width {
@@ -542,6 +546,10 @@ impl QRData {
                     self.role_data[x][y] = SymbolRole::QuietZone;
                 }
             }
+        }
+        if self.get_settings().debugging {
+            println!("drew quiet zone");
+            print!("{}", self);
         }
     }
 
@@ -651,6 +659,10 @@ impl QRData {
                 }
             }
         }
+        if self.get_settings().debugging {
+            println!("drew finding patterns");
+            print!("{}", self);
+        }
     }
 
     /// add separators between finder patterns and data
@@ -677,6 +689,10 @@ impl QRData {
                 }
             }
         }
+        if self.get_settings().debugging {
+            println!("drew separators");
+            print!("{}", self);
+        }
     }
 
     /// adding timing patterns to the code
@@ -702,6 +718,10 @@ impl QRData {
                     self.role_data[x][y] = SymbolRole::TimingPattern;
                 }
             }
+        }
+        if self.get_settings().debugging {
+            println!("drew timing patterns");
+            print!("{}", self);
         }
     }
 
@@ -738,6 +758,10 @@ impl QRData {
                     }
                 }
             }
+        }
+        if self.get_settings().debugging {
+            println!("after reserving place for format information");
+            print!("{}", self);
         }
     }
 
@@ -825,6 +849,10 @@ impl QRData {
                 }
             }
         }
+        if self.get_settings().debugging {
+            println!("after drawing alignment patterns");
+            print!("{}", self);
+        }
     }
 
     /// reserve version information
@@ -851,6 +879,10 @@ impl QRData {
                     }
                 }
             }
+        }
+        if self.get_settings().debugging {
+            println!("after reserving version information");
+            print!("{}", self);
         }
     }
 
@@ -959,6 +991,8 @@ impl QRData {
         bit_vectors
     }
 
+    /// calculates the erroro correction term that must be attached to the data bytes
+    /// to restore information lost due to low readablity of the code
     fn generate_error_corrction(
         &self,
         error_blocks: &[ErrorBlockInfo],
@@ -1025,6 +1059,8 @@ impl QRData {
         }
     }
 
+    /// the to be written data is distributed across the qrcode to raise
+    /// the chances of restoring data that is either lost or not read correctly
     fn shuffle_bit_vectors(
         &self,
         error_blocks: &[ErrorBlockInfo],
@@ -1256,6 +1292,11 @@ impl QRData {
         );
 
         self.write_into_self(&final_data_vect);
+
+        if self.get_settings().debugging {
+            println!("after writing the actual data");
+            print!("{}", self);
+        }
     }
 
     pub fn version_information(&mut self) {
@@ -1336,6 +1377,10 @@ impl QRData {
                     x_index_right = x_left_start;
                 }
             }
+        }
+        if self.get_settings().debugging {
+            println!("after writing the version information");
+            print!("{}", self);
         }
     }
 
@@ -1572,6 +1617,20 @@ impl QRData {
         let final_data_bits = information_sequences(data_bits);
         // write info into qrcode
         write_format_info!(self, smallest_index, biggest_index, final_data_bits);
+        if self.get_settings().debugging {
+            println!("after applying the mask and format information");
+            print!("{}", self);
+            // additional info
+            println!(
+                "version: {}\nwidth: {}\ntext length: {}\nerror blocks:",
+                self.get_version(),
+                self.get_width(),
+                self.get_settings().information.len()
+            );
+            for error_block in self.get_error_info() {
+                println!("    {:?}", error_block);
+            }
+        }
     }
 }
 

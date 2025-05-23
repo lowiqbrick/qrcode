@@ -12,74 +12,45 @@ pub fn qr_code(input: Settings) {
     // struct for all data
     let mut qrdata: QRData = QRData::new(input);
     // fill in everything required
-    if qrdata.get_settings().debugging {
-        println!("default initialisation of the data");
-        print!("{}", qrdata);
-    }
+
+    // draw white elements around the qrcode to
+    // separate it visualy from the background
     qrdata.quiet_zone();
-    if qrdata.get_settings().debugging {
-        println!("drew quiet zone");
-        print!("{}", qrdata);
-    }
+
+    // draw the finding patterns to determine rotation of the qrcode
     qrdata.finders();
-    if qrdata.get_settings().debugging {
-        println!("drew finding patterns");
-        print!("{}", qrdata);
-    }
+
+    // draw a zebra pattern between the finding patterns,
+    // so the scale between elemnts can be determined
     qrdata.timing_pattern();
-    if qrdata.get_settings().debugging {
-        println!("drew timing patterns");
-        print!("{}", qrdata);
-    }
+
+    // draw a white border around the finder patterns to separate them
+    // visualy from the rest of the qrcode
     qrdata.separators();
-    if qrdata.get_settings().debugging {
-        println!("drew separators");
-        print!("{}", qrdata);
-    }
+
+    // mark elements for format information,
+    // so they won't get overwritten
     qrdata.reserve_format_information();
-    if qrdata.get_settings().debugging {
-        println!("after reserving place for format information");
-        print!("{}", qrdata);
-    }
+
+    // draw elements into qrcode to detect and account for
+    // an uneven surface underneath the qrcode
     qrdata.draw_alignment_pattern();
-    if qrdata.get_settings().debugging {
-        println!("after drawing alignment patterns");
-        print!("{}", qrdata);
-    }
+
+    // mark elements for version information,
+    // so they won't get overwritten
     qrdata.reserve_version_information();
-    if qrdata.get_settings().debugging {
-        println!("after reserving version information");
-        print!("{}", qrdata);
-    }
+
     // after all preparations are done process and write the data
     qrdata.read_and_write();
-    if qrdata.get_settings().debugging {
-        println!("after writing the actual data");
-        print!("{}", qrdata);
-    }
+
+    // write the version information
+
     qrdata.version_information();
-    if qrdata.get_settings().debugging {
-        println!("after writing the version information");
-        print!("{}", qrdata);
-    }
+
+    // apply a mask onto the code, so that the code has
+    // no major white and/or black spots
     qrdata.masking_format_information();
-    if qrdata.get_settings().debugging {
-        println!("after applying the mask and format information");
-        print!("{}", qrdata);
-    }
-    if qrdata.get_settings().debugging {
-        // additional info
-        println!(
-            "version: {}\nwidth: {}\ntext length: {}\nerror blocks:",
-            qrdata.get_version(),
-            qrdata.get_width(),
-            qrdata.get_settings().information.len()
-        );
-        for error_block in qrdata.get_error_info() {
-            println!("    {:?}", error_block);
-        }
-    }
-    // actually display the qrcode
+    // actually display the qrcode, if not in debugging mode
     if !qrdata.get_settings().debugging {
         println!("{qrdata}");
     }

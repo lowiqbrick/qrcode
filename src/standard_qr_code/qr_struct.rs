@@ -50,6 +50,21 @@ impl MyBitVector {
         }
         println!("(hex)");
     }
+
+    pub fn pad_empty_rest(&mut self) {
+        let _begin_pad_index = (self.curr_position as f32 / 8.0).ceil() as usize;
+        let padding_value_1 = 0xec_u8 as i8;
+        let padding_value_2 = 0x11_u8 as i8;
+        let mut is_value_1 = true;
+        for byte_index in _begin_pad_index..self.data.len() {
+            if is_value_1 {
+                self.data[byte_index] = padding_value_1
+            } else {
+                self.data[byte_index] = padding_value_2
+            }
+            is_value_1 ^= true;
+        }
+    }
 }
 
 impl Display for MyBitVector {
@@ -988,6 +1003,16 @@ impl QRData {
                 println!("{}", vector);
             }
         }
+        // pad a bit vector if it has bytes that are unused
+        for bit_vector in bit_vectors.iter_mut() {
+            bit_vector.pad_empty_rest();
+        }
+        if self.settings.debugging {
+            println!("padded vectors");
+            for vector in bit_vectors.iter() {
+                vector.print_hex();
+            }
+        }
         bit_vectors
     }
 
@@ -1764,6 +1789,33 @@ mod tests {
             vec![0b0100_0101, 0b0101_0000]
         );
         assert_eq!(test_vec.data, vec![0b0100_0101, 0b0101_0000]);
+    }
+
+    #[test]
+    fn test_my_vect_padding() {
+        use super::MyBitVector;
+        let mut test_vector = MyBitVector::new_with_capacity(10);
+        test_vector.push(0b1010, 4);
+        test_vector.push(0b01010101, 8);
+        test_vector.pad_empty_rest();
+        for byte in test_vector.data.clone() {
+            print!("{:#x} ", byte);
+        }
+        assert_eq!(
+            test_vector.data,
+            vec![
+                0xa5_u8 as i8,
+                0x50,
+                0xec_u8 as i8,
+                0x11,
+                0xec_u8 as i8,
+                0x11,
+                0xec_u8 as i8,
+                0x11,
+                0xec_u8 as i8,
+                0x11
+            ]
+        );
     }
 
     #[test]

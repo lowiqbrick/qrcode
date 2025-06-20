@@ -1,7 +1,7 @@
 /// based on "Tutorial on Reed-Solomon Error Correction Coding" by William A. Geisel (August 1990)
 /// https://ntrs.nasa.gov/api/citations/19900019023/downloads/19900019023.pdf
 /// (last viewed 17.04.2025)
-use std::{cmp::Ordering, collections::HashMap, fmt::Display};
+use std::{collections::HashMap, fmt::Display};
 
 use crate::polynomials::Indeterminate;
 
@@ -15,6 +15,28 @@ pub struct GaloisFields {
 }
 
 impl GaloisFields {
+    /// converts a polynomila into it's obinary representation
+    /// x^4+x^3+x^2+1 => 0b00011101
+    pub fn _to_galois_u8(polynomial: Polynomial) -> u8 {
+        let mut mask = 0;
+        for indeterminate in polynomial.get_function().iter() {
+            if (indeterminate.get_degree()) >= 8 {
+                panic!(
+                    "galois u8 generation failed; encountered degree {} in polynimial",
+                    indeterminate.get_degree()
+                );
+            }
+            if indeterminate.get_coefficient() != 1 {
+                panic!(
+                    "galois u8 generation failed; coefficient in polynomial wasn't 1 (was {} instead)",
+                    indeterminate.get_coefficient()
+                );
+            }
+            mask += 1 << indeterminate.get_degree();
+        }
+        mask
+    }
+
     pub fn _new(m: u8, mod_fx: Polynomial) -> Self {
         assert!(m > 0);
         assert!(m <= 8);
@@ -31,50 +53,31 @@ impl GaloisFields {
             };
         }
 
-        // insert the simple terms
-        let mut last_value = 0;
-        for index in 2..(m + 1) {
-            if (index - 2) < 8 {
-                res_map.insert(index, 0b10 << (index - 2));
-                last_value = 0b10 << (index - 2);
+        // put in the generic stuff
+        let x1 = Polynomial::new(vec![Indeterminate::new(1, 1)]);
+        let mut x = x1.clone();
+        for index in 2..=m {
+            if let Some(existing_value) =
+                res_map.insert(index, GaloisFields::_to_galois_u8(x.clone()))
+            {
+                eprintln!("overwrote exisitng entry {:?} in hasmap", existing_value);
+            }
+            // don't if this is the last iteration
+            if index != m {
+                x = x * x1.clone();
             }
         }
 
-        // insert remaining values
-        // convert polynomial into mask
-        let mut mod_mask = 0;
-        for indeter in mod_fx.get_function() {
-            let current_degree = indeter.get_degree();
-            // println!("degree: {}", current_degree);
-            assert!((current_degree > -1) && (current_degree < m.into()));
-            // println!("current mask: {}", current_mask);
-            mod_mask |= 1 << current_degree;
+        // the acually interesting stuff
+        for index in m + 1..(2_u8.pow(m.into())) {
+            x = x.galois_mul_x1(mod_fx.clone(), m);
+            if let Some(existing_value) =
+                res_map.insert(index, GaloisFields::_to_galois_u8(x.clone()))
+            {
+                eprintln!("overwrote exisitng entry {:?} in hasmap", existing_value);
+            }
         }
-        // create mask to limit values to m
-        let mut limit_mask = 0;
-        for index in 0..m {
-            limit_mask |= 1 << index;
-        }
-        // println!("limit mask: {:8b}", limit_mask);
-        // println!("polynimial as binary: {:8b}", mod_mask);
-        // mask values calculate to m
-        let upper_limit = match m.cmp(&8) {
-            Ordering::Less => 2_u8.pow(m.into()),
-            Ordering::Equal => 255_u8,
-            Ordering::Greater => panic!("wrong m made it through assert!()"),
-        };
-        // insert the more complicated parts
-        for index in (m + 1)..upper_limit {
-            let is_msb_set = (last_value & (1 << (m - 1))) > 0;
-            let mut current_value = if is_msb_set {
-                ((last_value & 0b0111_1111) << 1) ^ mod_mask
-            } else {
-                last_value << 1
-            };
-            current_value &= limit_mask;
-            last_value = current_value;
-            res_map.insert(index, current_value);
-        }
+
         GaloisFields {
             m,
             mod_poly: mod_fx,

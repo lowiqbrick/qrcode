@@ -135,6 +135,56 @@ impl Polynomial {
     pub fn get_function(&self) -> Vec<Indeterminate> {
         self.function.clone()
     }
+
+    pub fn get_function_mut(&mut self) -> &mut Vec<Indeterminate> {
+        &mut self.function
+    }
+
+    pub fn remove_highest_degree(&self) -> Polynomial {
+        assert!(!self.function.is_empty());
+        let mut work_polynomial = self.clone();
+        // get highest degree
+        let mut highest_degree = 0;
+        for indeterminate in work_polynomial.function.iter() {
+            if indeterminate.degree > highest_degree {
+                highest_degree = indeterminate.degree;
+            }
+        }
+        // remove the highest degree
+        for indeterminate in work_polynomial.function.iter_mut() {
+            if indeterminate.degree == highest_degree {
+                indeterminate.coefficient = 0;
+            }
+        }
+        // delete the coefficient that is zero
+        work_polynomial.reduce();
+        work_polynomial
+    }
+
+    pub fn galois_mul_x1(&self, mod_fx: Polynomial, m: u8) -> Polynomial {
+        let x1 = Polynomial::new(vec![Indeterminate::new(1, 1)]);
+        let mut result = self.clone() * x1;
+        let mut is_overflowing = false;
+        // remove
+        for indeterminate in result.get_function_mut().iter_mut() {
+            if indeterminate.get_degree() == m.into() {
+                indeterminate.coefficient = 0;
+                is_overflowing = true;
+            }
+        }
+        result.reduce();
+        if is_overflowing {
+            result = result + mod_fx;
+        }
+        result.reduce();
+        for indeterminate in result.get_function_mut().iter_mut() {
+            if indeterminate.coefficient == 2 {
+                indeterminate.coefficient = 0;
+            }
+        }
+        result.reduce();
+        result
+    }
 }
 
 impl Display for Polynomial {

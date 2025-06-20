@@ -123,16 +123,30 @@ impl Display for GaloisFields {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
         writeln!(f, "GF({})", 2_u16.pow(self.m.into()))?;
         writeln!(f, "mod polynomial: {}", self.mod_poly)?;
-        writeln!(f, "elements   polynimial representation")?;
-        writeln!(f, "--------   -------------------------")?;
+        writeln!(
+            f,
+            "elements   alpha   polynimial representation   dec_value"
+        )?;
+        writeln!(
+            f,
+            "--------   -----   -------------------------   ---------"
+        )?;
         // get the elements
         let mut keys: Vec<u8> = self.galois_table.keys().copied().collect();
         keys.sort();
-        for key in keys {
+        for (index, key) in keys.iter().enumerate() {
+            // index
             write!(f, "{:>8}   ", key)?;
+            // alpha index
+            if index == 0 {
+                write!(f, "  nan   ")?;
+            } else {
+                write!(f, "{:>5}   ", index - 1)?;
+            }
+            // alpha value
             let current_enum = self
                 .galois_table
-                .get_key_value(&key)
+                .get_key_value(key)
                 .expect("key that was upposed to be in hashmap wasn't");
             let mut is_leading = true;
             for bit_index in (0..8).rev() {
@@ -147,7 +161,9 @@ impl Display for GaloisFields {
                     write!(f, "0")?;
                 }
             }
-            writeln!(f)?;
+            write!(f, "                    ")?;
+            // decimal value
+            writeln!(f, "{:>9}", current_enum.1)?;
         }
         write!(f, "")
     }

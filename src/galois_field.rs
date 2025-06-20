@@ -69,7 +69,12 @@ impl GaloisFields {
         }
 
         // the acually interesting stuff
-        for index in m + 1..(2_u8.pow(m.into())) {
+        let for_range = if m != 8 {
+            m + 1..=(2_u8.pow(m.into()) - 1)
+        } else {
+            m + 1..=255
+        };
+        for index in for_range {
             x = x.galois_mul_x1(mod_fx.clone(), m);
             if let Some(existing_value) =
                 res_map.insert(index, GaloisFields::_to_galois_u8(x.clone()))

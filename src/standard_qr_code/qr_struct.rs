@@ -963,10 +963,28 @@ impl QRData {
         if self.settings.debugging {
             println!("individual error blocks:");
         }
+        let galois_field = GaloisFields::_new(
+            8,
+            Polynomial::new(vec![
+                Indeterminate::new(1, 4),
+                Indeterminate::new(1, 3),
+                Indeterminate::new(1, 2),
+                Indeterminate::new(1, 0),
+            ]),
+        );
+        // go through all blocks
         for block in error_blocks.iter() {
-            // go through all block repetitions
+            let Some(generator_polynomial) = galois_field._correction_polynomial(
+                (block.num_data_bytes + block.num_error_bytes) - block.num_data_bytes,
+            ) else {
+                panic!("correction polynomial wasn't found")
+            };
+            if self.settings.debugging {
+                println!("error correction polynomial: {}", generator_polynomial);
+            }
+            println!("entered specified scenario");
+            // process individual blocks
             for _ in 0..block.num_block {
-                // go through all data vectors
                 let raw_polynomial: Polynomial =
                     Polynomial::from(bit_vectors[vector_index as usize].get_data())
                         * Polynomial::new(vec![Indeterminate::new(
@@ -974,41 +992,20 @@ impl QRData {
                             block.num_error_bytes as i16,
                         )]);
                 if self.settings.debugging {
-                    println!("polynomial befor error calculation: {}", raw_polynomial);
-                }
-                // create the divisor
-                // insert x-1 as a jumping of point
-                let mut divisor: Polynomial =
-                    Polynomial::new(vec![Indeterminate::new(1, 1), Indeterminate::new(-1, 0)]);
-                for index in 1..block.num_error_bytes {
-                    divisor = divisor
-                        * Polynomial::new(vec![
-                            Indeterminate::new(1, 1),
-                            Indeterminate::new(-(index as i8 + 1), 0),
-                        ]);
-                }
-                if self.settings.debugging {
-                    println!("error correction polynimial: {}", divisor);
-                }
-                let g_of_x: Polynomial = raw_polynomial / divisor.clone();
-                let data_final: Polynomial = g_of_x.clone() * divisor;
-                for values in data_final.clone().into_iter() {
-                    all_blocks[vector_index as usize].push(values.get_coefficient() as u8);
-                }
-                if self.settings.debugging {
                     println!(
-                        "data with error correction: {}\nas vector (len {}): {:?}",
-                        data_final,
-                        all_blocks[vector_index as usize].len(),
-                        all_blocks[vector_index as usize]
+                        "pre expansion polynomial (block {}): {}",
+                        vector_index,
+                        Polynomial::from(bit_vectors[vector_index as usize].get_data())
                     );
-                    print!("as hex: ");
-                    for value in all_blocks.iter() {
-                        print!("{:x?}", value);
-                    }
-                    println!();
+                    println!(
+                        "raw polynomial (block {}): {}",
+                        vector_index, raw_polynomial
+                    );
                 }
                 vector_index += 1;
+            }
+            if self.settings.debugging {
+                println!("Galois Field: {galois_field}");
             }
         }
         if self.settings.debugging {

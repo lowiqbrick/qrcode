@@ -24,6 +24,10 @@ impl Indeterminate {
         self.coefficient
     }
 
+    pub fn set_coefficient(&mut self, new_coefficient: u8) {
+        self.coefficient = new_coefficient;
+    }
+
     pub fn get_degree(&self) -> i16 {
         self.degree
     }

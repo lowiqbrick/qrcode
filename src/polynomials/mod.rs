@@ -72,6 +72,14 @@ impl Polynomial {
 
     /// method to reduce/make the polynomial look good
     /// (indeterminates get sorted from highest power degree to lowest)
+    ///
+    ///  # Bug
+    ///
+    /// This method updates the struct it is called on correctly and SHOULD return
+    /// the exact value the struct was changed to, but doesn't. The function removes
+    /// indeterminates with a coefficient that is zero, but returns the
+    /// version where the zero coefficients are still present. Changing this
+    /// causes an assertion error later on.
     pub fn reduce(&mut self) -> Polynomial {
         // vector to collect all degrees
         let mut degrees: Vec<i16> = vec![];

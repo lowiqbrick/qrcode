@@ -1,3 +1,4 @@
+use crate::galois_field::GaloisFields;
 use crate::input::ErrorLevel;
 use crate::polynomials::{Indeterminate, Polynomial};
 use crate::standard_qr_code::version_constants::{alignment_pattern_data, version_info};
@@ -29,7 +30,7 @@ const BLUE: &str = "\x1b[37;44m";
 const BRIGHTCYAN: &str = "\x1b[30;106m";
 
 /// constant for byte mode indicator
-const BYTEMODEINDICATOR: i8 = 0b0100;
+const BYTEMODEINDICATOR: u8 = 0b0100;
 const CHARACTERBITS: u8 = 8;
 
 /// supports writing u8 values bitwise in a vector
@@ -40,21 +41,21 @@ struct MyBitVector {
     /// holds the current bit that will be written to next
     curr_position: u32,
     // the actual data
-    data: Vec<i8>,
+    data: Vec<u8>,
 }
 
 impl MyBitVector {
     pub fn print_hex(&self) {
         for element in self.data.iter() {
-            print!("{:02x} ", *element as u8);
+            print!("{:02x} ", *element);
         }
         println!("(hex)");
     }
 
     pub fn pad_empty_rest(&mut self) {
         let _begin_pad_index = (self.curr_position as f32 / 8.0).ceil() as usize;
-        let padding_value_1 = 0xec_u8 as i8;
-        let padding_value_2 = 0x11_u8 as i8;
+        let padding_value_1 = 0xec;
+        let padding_value_2 = 0x11;
         let mut is_value_1 = true;
         for byte_index in _begin_pad_index..self.data.len() {
             if is_value_1 {
@@ -71,78 +72,14 @@ impl Display for MyBitVector {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
         let mut bytes_left = self.data.len();
         for byte in self.data.iter() {
-            write!(
-                f,
-                "{}",
-                if (byte & 0b1000_0000u8 as i8) > 0 {
-                    1
-                } else {
-                    0
-                }
-            )?;
-            write!(
-                f,
-                "{}",
-                if (byte & 0b0100_0000u8 as i8) > 0 {
-                    1
-                } else {
-                    0
-                }
-            )?;
-            write!(
-                f,
-                "{}",
-                if (byte & 0b0010_0000u8 as i8) > 0 {
-                    1
-                } else {
-                    0
-                }
-            )?;
-            write!(
-                f,
-                "{}_",
-                if (byte & 0b0001_0000u8 as i8) > 0 {
-                    1
-                } else {
-                    0
-                }
-            )?;
-            write!(
-                f,
-                "{}",
-                if (byte & 0b0000_1000u8 as i8) > 0 {
-                    1
-                } else {
-                    0
-                }
-            )?;
-            write!(
-                f,
-                "{}",
-                if (byte & 0b0000_0100u8 as i8) > 0 {
-                    1
-                } else {
-                    0
-                }
-            )?;
-            write!(
-                f,
-                "{}",
-                if (byte & 0b0000_0010u8 as i8) > 0 {
-                    1
-                } else {
-                    0
-                }
-            )?;
-            write!(
-                f,
-                "{}",
-                if (byte & 0b0000_0001u8 as i8) > 0 {
-                    1
-                } else {
-                    0
-                }
-            )?;
+            write!(f, "{}", if (byte & 0b1000_0000u8) > 0 { 1 } else { 0 })?;
+            write!(f, "{}", if (byte & 0b0100_0000u8) > 0 { 1 } else { 0 })?;
+            write!(f, "{}", if (byte & 0b0010_0000u8) > 0 { 1 } else { 0 })?;
+            write!(f, "{}_", if (byte & 0b0001_0000u8) > 0 { 1 } else { 0 })?;
+            write!(f, "{}", if (byte & 0b0000_1000u8) > 0 { 1 } else { 0 })?;
+            write!(f, "{}", if (byte & 0b0000_0100u8) > 0 { 1 } else { 0 })?;
+            write!(f, "{}", if (byte & 0b0000_0010u8) > 0 { 1 } else { 0 })?;
+            write!(f, "{}", if (byte & 0b0000_0001u8) > 0 { 1 } else { 0 })?;
             bytes_left -= 1;
             if bytes_left != 0 {
                 write!(f, " ")?;
@@ -156,7 +93,7 @@ impl MyBitVector {
     /// generates new struct with max_size bytes
     fn new_with_capacity(max_size: u16) -> MyBitVector {
         // fill vector with zeroes
-        let mut zero_vec: Vec<i8> = Vec::with_capacity(max_size as usize);
+        let mut zero_vec: Vec<u8> = Vec::with_capacity(max_size as usize);
         for _index in 0..max_size {
             zero_vec.push(0);
             // if (_index != 0) && (_index % 10 == 0) {
@@ -176,7 +113,7 @@ impl MyBitVector {
     }
 
     /// writes size bits of value into MyBitVector
-    fn push(&mut self, value: i8, size: u8) {
+    fn push(&mut self, value: u8, size: u8) {
         // check whether the data fits into the vector
         if self.capacity as u32 * 8 < (self.curr_position + size as u32) {
             eprintln!(
@@ -194,7 +131,7 @@ impl MyBitVector {
             // println!("read bit {}", current_bit_read);
             assert!(current_bit_read < 8);
             // get the value of the bit in question
-            let current_bit: i8 = match current_bit_read {
+            let current_bit: u8 = match current_bit_read {
                 0 => value & 0b0000_0001,
                 1 => (value & 0b0000_0010) >> 1,
                 2 => (value & 0b0000_0100) >> 2,
@@ -202,7 +139,7 @@ impl MyBitVector {
                 4 => (value & 0b0001_0000) >> 4,
                 5 => (value & 0b0010_0000) >> 5,
                 6 => (value & 0b0100_0000) >> 6,
-                7 => (value & 0b1000_0000u8 as i8) >> 7,
+                7 => (value & 0b1000_0000) >> 7,
                 _ => {
                     panic!("tried to read bit {} of an u8", current_bit_read);
                 }
@@ -232,7 +169,7 @@ impl MyBitVector {
         }
     }
 
-    fn get_data(&self) -> Vec<i8> {
+    fn get_data(&self) -> Vec<u8> {
         self.data.clone()
     }
 }
@@ -962,10 +899,10 @@ impl QRData {
         // add character count indicator
         let len_text: usize = data.len();
         if self.version >= 10 {
-            bit_vectors[bit_vector_index].push(((len_text & 0b1111_1111_0000_0000) >> 8) as i8, 8);
-            bit_vectors[bit_vector_index].push((len_text & 0b0000_0000_1111_1111) as i8, 8);
+            bit_vectors[bit_vector_index].push(((len_text & 0b1111_1111_0000_0000) >> 8) as u8, 8);
+            bit_vectors[bit_vector_index].push((len_text & 0b0000_0000_1111_1111) as u8, 8);
         } else {
-            bit_vectors[bit_vector_index].push((len_text & 0b1111_1111) as i8, 8);
+            bit_vectors[bit_vector_index].push((len_text & 0b1111_1111) as u8, 8);
         }
         for char in data.chars() {
             // get index and size of MyBitVector
@@ -974,18 +911,16 @@ impl QRData {
             // check if entire char can be written into MyBitVector
             let remaining_capacity: u32 = vector_capacity as u32 - vector_index;
             if remaining_capacity >= CHARACTERBITS as u32 {
-                bit_vectors[bit_vector_index].push(char as i8, CHARACTERBITS);
+                bit_vectors[bit_vector_index].push(char as u8, CHARACTERBITS);
             } else if remaining_capacity == 4 {
                 // write what fits into vector
-                bit_vectors[bit_vector_index].push(
-                    (char as i8 & 0b1111_0000_u8 as i8) >> 4,
-                    remaining_capacity as u8,
-                );
+                bit_vectors[bit_vector_index]
+                    .push((char as u8 & 0b1111_0000) >> 4, remaining_capacity as u8);
                 // increase index
                 bit_vector_index += 1;
                 assert!(bit_vector_index < bit_vectors.len());
                 bit_vectors[bit_vector_index]
-                    .push(char as i8 & 0b0000_1111, remaining_capacity as u8);
+                    .push(char as u8 & 0b0000_1111, remaining_capacity as u8);
             } else {
                 panic!("remaining capacity wasn't 4, but {}", remaining_capacity);
             }
@@ -1803,18 +1738,7 @@ mod tests {
         }
         assert_eq!(
             test_vector.data,
-            vec![
-                0xa5_u8 as i8,
-                0x50,
-                0xec_u8 as i8,
-                0x11,
-                0xec_u8 as i8,
-                0x11,
-                0xec_u8 as i8,
-                0x11,
-                0xec_u8 as i8,
-                0x11
-            ]
+            vec![0xa5, 0x50, 0xec, 0x11, 0xec, 0x11, 0xec, 0x11, 0xec, 0x11]
         );
     }
 

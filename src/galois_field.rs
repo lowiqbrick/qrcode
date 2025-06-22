@@ -167,13 +167,13 @@ impl GaloisFields {
         correction_polynomial: Polynomial,
         galois_field: GaloisFields,
     ) -> Polynomial {
-        println!("given data: {}", data_bytes);
+        // println!("given data: {}", data_bytes);
         let mut work_data_bytes = data_bytes.clone();
         let number_iterations =
             data_bytes.get_function().len() - correction_polynomial.get_function().len();
         let num_valid_operations = correction_polynomial.get_function().len();
-        println!("num valid operations: {}", num_valid_operations);
-        println!("number itertaions: {}", number_iterations);
+        // println!("num valid operations: {}", num_valid_operations);
+        // println!("number itertaions: {}", number_iterations);
         for iteration_index in 0..=number_iterations {
             // get highest degree
             let mut highest_degree = 0;
@@ -194,17 +194,17 @@ impl GaloisFields {
                 panic!("highest degree couldn't be found even though is should exitst");
             }
             let highest_degree_value = highest_degree_value_option.unwrap();
-            println!("highest degree value: {}", highest_degree_value);
+            // println!("highest degree value: {}", highest_degree_value);
             // multiply everything with highest value
             let mut offset = iteration_index;
             let mut working_iterations = num_valid_operations;
             // is the same for all following iterations
             let highest_value_index = galois_field.value_to_index(highest_degree_value).unwrap();
-            println!(
-                "index of the highest value in the data is {}",
-                highest_value_index
-            );
-            for (index, element) in work_data_bytes.get_function_mut().iter_mut().enumerate() {
+            // println!(
+            //     "index of the highest value in the data is {}",
+            //     highest_value_index
+            // );
+            for (_index, element) in work_data_bytes.get_function_mut().iter_mut().enumerate() {
                 if offset == 0 && working_iterations != 0 {
                     // get alpha indices from correction and highest value
                     let mut value_correction_value = None;
@@ -225,24 +225,24 @@ impl GaloisFields {
                             value_correction_value.unwrap()
                         );
                     };
-                    println!("--------------\ndata byte at index {}", index);
+                    // println!("--------------\ndata byte at index {}", _index);
                     // add indices
                     let new_alpha_index =
                         ((highest_value_index as u16 + value_correction_index as u16) % 255) as u8;
-                    println!(
-                        "added indices ({} + {}) % 255 = {}",
-                        highest_value_index, value_correction_index, new_alpha_index
-                    );
+                    // println!(
+                    //     "added indices ({} + {}) % 255 = {}",
+                    //     highest_value_index, value_correction_index, new_alpha_index
+                    // );
                     let new_alpha_value = galois_field.index_to_value(new_alpha_index);
                     // XOR the values
                     let final_value = new_alpha_value ^ element.get_coefficient();
-                    println!(
-                        "XOR'ing {} (index {}) and {} to {}",
-                        new_alpha_value,
-                        new_alpha_index,
-                        element.get_coefficient(),
-                        final_value
-                    );
+                    // println!(
+                    //     "XOR'ing {} (index {}) and {} to {}",
+                    //     new_alpha_value,
+                    //     new_alpha_index,
+                    //     element.get_coefficient(),
+                    //     final_value
+                    // );
                     // assign new value
                     element.set_coefficient(final_value);
                 }
@@ -253,7 +253,7 @@ impl GaloisFields {
                     offset -= 1;
                 }
             }
-            println!("after iteration {}: {}", iteration_index, work_data_bytes);
+            // println!("after iteration {}: {}", iteration_index, work_data_bytes);
         }
         work_data_bytes
     }

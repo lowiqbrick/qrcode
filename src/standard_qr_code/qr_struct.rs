@@ -982,7 +982,6 @@ impl QRData {
             if self.settings.debugging {
                 println!("error correction polynomial: {}", generator_polynomial);
             }
-            println!("entered specified scenario");
             // process individual blocks
             for _ in 0..block.num_block {
                 let mut raw_polynomial: Polynomial =

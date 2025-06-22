@@ -114,7 +114,7 @@ impl GaloisFields {
     }
 
     /// meant to be used on a galosi field of m=8 and Polynomial x^4+x^3+x^2+1
-    pub fn _correction_polynomial(&self, num_error_corr: u8) -> Option<Polynomial> {
+    pub fn correction_polynomial(&self, num_error_corr: u8) -> Option<Polynomial> {
         match num_error_corr {
             7 => Some(Polynomial::new(vec![
                 Indeterminate::new(1, 7),
@@ -372,7 +372,7 @@ fn test_calculate_error_correction() {
             Indeterminate::new(1, 0),
         ]),
     );
-    let Some(correction_polynomial) = galois_field._correction_polynomial(10) else {
+    let Some(correction_polynomial) = galois_field.correction_polynomial(10) else {
         panic!("test couldn't obtain generator polynomial for 10 error bytes");
     };
     let mut data = Polynomial::new(vec![

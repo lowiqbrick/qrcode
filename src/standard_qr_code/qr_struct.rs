@@ -974,7 +974,7 @@ impl QRData {
         );
         // go through all blocks
         for block in error_blocks.iter() {
-            let Some(generator_polynomial) = galois_field._correction_polynomial(
+            let Some(generator_polynomial) = galois_field.correction_polynomial(
                 (block.num_data_bytes + block.num_error_bytes) - block.num_data_bytes,
             ) else {
                 panic!("correction polynomial wasn't found")

@@ -985,7 +985,7 @@ impl QRData {
             println!("entered specified scenario");
             // process individual blocks
             for _ in 0..block.num_block {
-                let raw_polynomial: Polynomial =
+                let mut raw_polynomial: Polynomial =
                     Polynomial::from(bit_vectors[vector_index as usize].get_data())
                         * Polynomial::new(vec![Indeterminate::new(
                             1,
@@ -1001,6 +1001,28 @@ impl QRData {
                         "raw polynomial (block {}): {}",
                         vector_index, raw_polynomial
                     );
+                }
+                // attach missing 0x^n
+                let high_degree = raw_polynomial.get_function()[0].get_degree();
+                for degree in (0..=high_degree).rev() {
+                    if !raw_polynomial.is_degree_in_field(degree) {
+                        raw_polynomial
+                            .get_function_mut()
+                            .push(Indeterminate::new(0, degree));
+                    }
+                }
+                // generate error bytes
+                let error_polynomial = GaloisFields::calculate_error_correction(
+                    &raw_polynomial,
+                    generator_polynomial.clone(),
+                    galois_field.clone(),
+                );
+                // put data and error correction together
+                let mut final_polynomial = raw_polynomial + error_polynomial;
+                final_polynomial.reduce();
+                // write results into final vector
+                for values in final_polynomial.into_iter() {
+                    all_blocks[vector_index as usize].push(values.get_coefficient());
                 }
                 vector_index += 1;
             }
@@ -1107,6 +1129,13 @@ impl QRData {
             );
         }
         // everything was written?
+        if final_data_vect.len() != tot_num_codewords {
+            eprint!(
+                "final data vector length: {}; total number of codewords: {}",
+                final_data_vect.len(),
+                tot_num_codewords
+            );
+        }
         assert!(final_data_vect.len() == tot_num_codewords);
         if self.settings.debugging {
             println!(

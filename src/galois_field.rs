@@ -7,7 +7,7 @@ use crate::polynomials::Indeterminate;
 
 use super::polynomials::Polynomial;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct GaloisFields {
     m: u8,
     mod_poly: Polynomial,
@@ -163,7 +163,7 @@ impl GaloisFields {
     }
 
     pub fn calculate_error_correction(
-        data_bytes: Polynomial,
+        data_bytes: &Polynomial,
         correction_polynomial: Polynomial,
         galois_field: GaloisFields,
     ) -> Polynomial {
@@ -399,7 +399,7 @@ fn test_calculate_error_correction() {
         data.get_function_mut().push(Indeterminate::new(0, index));
     }
     let result =
-        GaloisFields::calculate_error_correction(data, correction_polynomial, galois_field);
+        GaloisFields::calculate_error_correction(&data, correction_polynomial, galois_field);
     let expected_result = Polynomial::new(vec![
         Indeterminate::new(0, 25),
         Indeterminate::new(0, 24),

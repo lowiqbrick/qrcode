@@ -188,6 +188,15 @@ impl Polynomial {
         result.reduce();
         result
     }
+
+    pub fn is_degree_in_field(&self, degree: i16) -> bool {
+        for element in self.function.iter() {
+            if degree == element.get_degree() {
+                return true;
+            }
+        }
+        false
+    }
 }
 
 impl Display for Polynomial {

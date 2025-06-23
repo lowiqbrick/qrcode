@@ -204,7 +204,7 @@ impl GaloisFields {
             //     "index of the highest value in the data is {}",
             //     highest_value_index
             // );
-            for (_index, element) in work_data_bytes.get_function_mut().iter_mut().enumerate() {
+            for element in work_data_bytes.get_function_mut().iter_mut() {
                 if offset == 0 && working_iterations != 0 {
                     // get alpha indices from correction and highest value
                     let mut value_correction_value = None;
@@ -215,43 +215,40 @@ impl GaloisFields {
                             value_correction_value = Some(correction_element.get_coefficient());
                         }
                     }
-                    let value_correction_index = if value_correction_value.is_some() {
-                        galois_field
-                            .value_to_index(value_correction_value.unwrap())
-                            .unwrap()
+                    if let Some(value_correction_index) = value_correction_value {
+                        galois_field.value_to_index(value_correction_index).unwrap();
+                        // println!("--------------\ndata byte at index {}", _index);
+                        // add indices
+                        let new_alpha_index = ((highest_value_index as u16
+                            + value_correction_index as u16)
+                            % 255) as u8;
+                        // println!(
+                        //     "added indices ({} + {}) % 255 = {}",
+                        //     highest_value_index, value_correction_index, new_alpha_index
+                        // );
+                        let new_alpha_value = galois_field.index_to_value(new_alpha_index);
+                        // XOR the values
+                        let final_value = new_alpha_value ^ element.get_coefficient();
+                        // println!(
+                        //     "XOR'ing {} (index {}) and {} to {}",
+                        //     new_alpha_value,
+                        //     new_alpha_index,
+                        //     element.get_coefficient(),
+                        //     final_value
+                        // );
+                        // assign new value
+                        element.set_coefficient(final_value);
                     } else {
                         panic!(
                             "no index for value {} in galois field",
                             value_correction_value.unwrap()
                         );
                     };
-                    // println!("--------------\ndata byte at index {}", _index);
-                    // add indices
-                    let new_alpha_index =
-                        ((highest_value_index as u16 + value_correction_index as u16) % 255) as u8;
-                    // println!(
-                    //     "added indices ({} + {}) % 255 = {}",
-                    //     highest_value_index, value_correction_index, new_alpha_index
-                    // );
-                    let new_alpha_value = galois_field.index_to_value(new_alpha_index);
-                    // XOR the values
-                    let final_value = new_alpha_value ^ element.get_coefficient();
-                    // println!(
-                    //     "XOR'ing {} (index {}) and {} to {}",
-                    //     new_alpha_value,
-                    //     new_alpha_index,
-                    //     element.get_coefficient(),
-                    //     final_value
-                    // );
-                    // assign new value
-                    element.set_coefficient(final_value);
                 }
                 if working_iterations != 0 && offset == 0 {
                     working_iterations -= 1;
                 }
-                if offset != 0 {
-                    offset -= 1;
-                }
+                offset = offset.saturating_sub(1);
             }
             // println!("after iteration {}: {}", iteration_index, work_data_bytes);
         }

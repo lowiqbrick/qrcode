@@ -3,9 +3,12 @@ use crate::input::ErrorLevel;
 use crate::polynomials::{Indeterminate, Polynomial};
 use crate::standard_qr_code::version_constants::{alignment_pattern_data, version_info};
 use crate::{standard_qr_code::utils::get_verison_info, Settings};
-use std::cmp::Ordering;
-use std::fmt::{Display, Formatter, Result};
-use std::ops::BitXor;
+use std::{
+    cmp::Ordering,
+    fmt::{Display, Formatter, Result},
+    ops::BitXor,
+    vec::Vec,
+};
 
 use super::version_constants::information_sequences;
 
@@ -1650,6 +1653,16 @@ impl QRData {
                 println!("    {error_block:?}");
             }
         }
+    }
+
+    /// prints debugging output of the output data
+    pub fn print_data(&self) {
+        println!("{:?}", self.output_data);
+    }
+
+    // only used in tests
+    pub fn _get_data(&self) -> Vec<Vec<SymbolStatus>> {
+        self.output_data.clone()
     }
 }
 

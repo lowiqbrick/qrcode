@@ -1,10 +1,11 @@
 use crate::input::Settings;
+mod generation_tests;
 mod qr_struct;
 mod utils;
 mod version_constants;
 use crate::standard_qr_code::qr_struct::QRData;
 
-pub fn qr_code(input: Settings) {
+pub fn qr_code(input: Settings) -> QRData {
     // all text is assumed to be encoded in byte mode
     if input.debugging {
         println!("{input:?}");
@@ -53,5 +54,9 @@ pub fn qr_code(input: Settings) {
     // actually display the qrcode, if not in debugging mode
     if !qrdata.get_settings().debugging {
         println!("{qrdata}");
+    } else {
+        println!("printing the qrcodes raw data:");
+        qrdata.print_data();
     }
+    qrdata
 }

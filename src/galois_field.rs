@@ -113,197 +113,96 @@ impl GaloisFields {
         Err(format!("value {value} not found"))
     }
 
+    /// generates the error correction polynomial based on the given galois field and coefficients
+    fn generate_corr_polynomial(galois_field: &Self, coefficients_indices: Vec<u8>) -> Polynomial {
+        let mut polynomial = Polynomial::new(vec![]);
+        let mut current_degree = coefficients_indices.len() - 1;
+        for coefficient_index in coefficients_indices.iter() {
+            println!("index: {current_degree}");
+            println!("coefficient_index: {coefficient_index}");
+            let alpha_value = galois_field.index_to_value(*coefficient_index);
+            println!("value to index: {alpha_value}");
+            if current_degree == (coefficients_indices.len() - 1) {
+                polynomial.push(Indeterminate::new(1, current_degree.try_into().unwrap()));
+            } else {
+                polynomial.push(Indeterminate::new(
+                    alpha_value,
+                    current_degree.try_into().unwrap(),
+                ));
+            }
+            current_degree = current_degree.saturating_sub(1);
+        }
+        assert!(current_degree == 0);
+        println!("poly: {polynomial}");
+        polynomial
+    }
+
     /// meant to be used on a galosi field of m=8 and Polynomial x^4+x^3+x^2+1
     pub fn correction_polynomial(&self, num_error_corr: u8) -> Option<Polynomial> {
         match num_error_corr {
-            2 => Some(Polynomial::new(vec![
-                Indeterminate::new(self.index_to_value(1), 2),
-                Indeterminate::new(self.index_to_value(25), 1),
-                Indeterminate::new(self.index_to_value(1), 0),
-            ])),
-            5 => Some(Polynomial::new(vec![
-                Indeterminate::new(self.index_to_value(1), 5),
-                Indeterminate::new(self.index_to_value(113), 4),
-                Indeterminate::new(self.index_to_value(164), 3),
-                Indeterminate::new(self.index_to_value(166), 2),
-                Indeterminate::new(self.index_to_value(119), 1),
-                Indeterminate::new(self.index_to_value(10), 0),
-            ])),
-            7 => Some(Polynomial::new(vec![
-                Indeterminate::new(1, 7),
-                Indeterminate::new(self.index_to_value(87), 6),
-                Indeterminate::new(self.index_to_value(229), 5),
-                Indeterminate::new(self.index_to_value(146), 4),
-                Indeterminate::new(self.index_to_value(149), 3),
-                Indeterminate::new(self.index_to_value(238), 2),
-                Indeterminate::new(self.index_to_value(102), 1),
-                Indeterminate::new(self.index_to_value(21), 0),
-            ])),
-            8 => Some(Polynomial::new(vec![
-                Indeterminate::new(1, 8),
-                Indeterminate::new(self.index_to_value(175), 7),
-                Indeterminate::new(self.index_to_value(238), 6),
-                Indeterminate::new(self.index_to_value(208), 5),
-                Indeterminate::new(self.index_to_value(249), 4),
-                Indeterminate::new(self.index_to_value(215), 3),
-                Indeterminate::new(self.index_to_value(252), 2),
-                Indeterminate::new(self.index_to_value(196), 1),
-                Indeterminate::new(self.index_to_value(28), 0),
-            ])),
-            10 => Some(Polynomial::new(vec![
-                Indeterminate::new(1, 10),
-                Indeterminate::new(self.index_to_value(251), 9),
-                Indeterminate::new(self.index_to_value(67), 8),
-                Indeterminate::new(self.index_to_value(46), 7),
-                Indeterminate::new(self.index_to_value(61), 6),
-                Indeterminate::new(self.index_to_value(118), 5),
-                Indeterminate::new(self.index_to_value(70), 4),
-                Indeterminate::new(self.index_to_value(64), 3),
-                Indeterminate::new(self.index_to_value(94), 2),
-                Indeterminate::new(self.index_to_value(32), 1),
-                Indeterminate::new(self.index_to_value(45), 0),
-            ])),
-            13 => Some(Polynomial::new(vec![
-                Indeterminate::new(1, 13),
-                Indeterminate::new(self.index_to_value(74), 12),
-                Indeterminate::new(self.index_to_value(152), 11),
-                Indeterminate::new(self.index_to_value(176), 10),
-                Indeterminate::new(self.index_to_value(100), 9),
-                Indeterminate::new(self.index_to_value(86), 8),
-                Indeterminate::new(self.index_to_value(100), 7),
-                Indeterminate::new(self.index_to_value(106), 6),
-                Indeterminate::new(self.index_to_value(104), 5),
-                Indeterminate::new(self.index_to_value(130), 4),
-                Indeterminate::new(self.index_to_value(218), 3),
-                Indeterminate::new(self.index_to_value(206), 2),
-                Indeterminate::new(self.index_to_value(140), 1),
-                Indeterminate::new(self.index_to_value(78), 0),
-            ])),
-            14 => Some(Polynomial::new(vec![
-                Indeterminate::new(1, 14),
-                Indeterminate::new(self.index_to_value(199), 13),
-                Indeterminate::new(self.index_to_value(249), 12),
-                Indeterminate::new(self.index_to_value(155), 11),
-                Indeterminate::new(self.index_to_value(48), 10),
-                Indeterminate::new(self.index_to_value(190), 9),
-                Indeterminate::new(self.index_to_value(124), 8),
-                Indeterminate::new(self.index_to_value(218), 7),
-                Indeterminate::new(self.index_to_value(137), 6),
-                Indeterminate::new(self.index_to_value(216), 5),
-                Indeterminate::new(self.index_to_value(87), 4),
-                Indeterminate::new(self.index_to_value(207), 3),
-                Indeterminate::new(self.index_to_value(59), 2),
-                Indeterminate::new(self.index_to_value(22), 1),
-                Indeterminate::new(self.index_to_value(91), 0),
-            ])),
-            16 => Some(Polynomial::new(vec![
-                Indeterminate::new(1, 16),
-                Indeterminate::new(self.index_to_value(120), 15),
-                Indeterminate::new(self.index_to_value(104), 14),
-                Indeterminate::new(self.index_to_value(107), 13),
-                Indeterminate::new(self.index_to_value(109), 12),
-                Indeterminate::new(self.index_to_value(102), 11),
-                Indeterminate::new(self.index_to_value(161), 10),
-                Indeterminate::new(self.index_to_value(76), 9),
-                Indeterminate::new(self.index_to_value(3), 8),
-                Indeterminate::new(self.index_to_value(91), 7),
-                Indeterminate::new(self.index_to_value(191), 6),
-                Indeterminate::new(self.index_to_value(147), 5),
-                Indeterminate::new(self.index_to_value(169), 4),
-                Indeterminate::new(self.index_to_value(182), 3),
-                Indeterminate::new(self.index_to_value(194), 2),
-                Indeterminate::new(self.index_to_value(225), 1),
-                Indeterminate::new(self.index_to_value(120), 0),
-            ])),
-            17 => Some(Polynomial::new(vec![
-                Indeterminate::new(1, 17),
-                Indeterminate::new(self.index_to_value(43), 16),
-                Indeterminate::new(self.index_to_value(139), 15),
-                Indeterminate::new(self.index_to_value(206), 14),
-                Indeterminate::new(self.index_to_value(78), 13),
-                Indeterminate::new(self.index_to_value(43), 12),
-                Indeterminate::new(self.index_to_value(239), 11),
-                Indeterminate::new(self.index_to_value(123), 10),
-                Indeterminate::new(self.index_to_value(206), 9),
-                Indeterminate::new(self.index_to_value(214), 8),
-                Indeterminate::new(self.index_to_value(147), 7),
-                Indeterminate::new(self.index_to_value(24), 6),
-                Indeterminate::new(self.index_to_value(99), 5),
-                Indeterminate::new(self.index_to_value(150), 4),
-                Indeterminate::new(self.index_to_value(39), 3),
-                Indeterminate::new(self.index_to_value(243), 2),
-                Indeterminate::new(self.index_to_value(163), 1),
-                Indeterminate::new(self.index_to_value(136), 0),
-            ])),
-            18 => Some(Polynomial::new(vec![
-                Indeterminate::new(1, 18),
-                Indeterminate::new(self.index_to_value(215), 17),
-                Indeterminate::new(self.index_to_value(234), 16),
-                Indeterminate::new(self.index_to_value(158), 15),
-                Indeterminate::new(self.index_to_value(94), 14),
-                Indeterminate::new(self.index_to_value(184), 13),
-                Indeterminate::new(self.index_to_value(97), 12),
-                Indeterminate::new(self.index_to_value(118), 11),
-                Indeterminate::new(self.index_to_value(170), 10),
-                Indeterminate::new(self.index_to_value(79), 9),
-                Indeterminate::new(self.index_to_value(187), 8),
-                Indeterminate::new(self.index_to_value(152), 7),
-                Indeterminate::new(self.index_to_value(148), 6),
-                Indeterminate::new(self.index_to_value(252), 5),
-                Indeterminate::new(self.index_to_value(179), 4),
-                Indeterminate::new(self.index_to_value(5), 3),
-                Indeterminate::new(self.index_to_value(98), 2),
-                Indeterminate::new(self.index_to_value(96), 1),
-                Indeterminate::new(self.index_to_value(153), 0),
-            ])),
-            20 => Some(Polynomial::new(vec![
-                Indeterminate::new(1, 20),
-                Indeterminate::new(self.index_to_value(17), 19),
-                Indeterminate::new(self.index_to_value(60), 18),
-                Indeterminate::new(self.index_to_value(79), 17),
-                Indeterminate::new(self.index_to_value(50), 16),
-                Indeterminate::new(self.index_to_value(61), 15),
-                Indeterminate::new(self.index_to_value(163), 14),
-                Indeterminate::new(self.index_to_value(26), 13),
-                Indeterminate::new(self.index_to_value(187), 12),
-                Indeterminate::new(self.index_to_value(202), 11),
-                Indeterminate::new(self.index_to_value(180), 10),
-                Indeterminate::new(self.index_to_value(221), 9),
-                Indeterminate::new(self.index_to_value(225), 8),
-                Indeterminate::new(self.index_to_value(83), 7),
-                Indeterminate::new(self.index_to_value(239), 6),
-                Indeterminate::new(self.index_to_value(156), 5),
-                Indeterminate::new(self.index_to_value(164), 4),
-                Indeterminate::new(self.index_to_value(212), 3),
-                Indeterminate::new(self.index_to_value(212), 2),
-                Indeterminate::new(self.index_to_value(188), 1),
-                Indeterminate::new(self.index_to_value(190), 0),
-            ])),
-            22 => Some(Polynomial::new(vec![
-                Indeterminate::new(1, 22),
-                Indeterminate::new(self.index_to_value(210), 21),
-                Indeterminate::new(self.index_to_value(171), 20),
-                Indeterminate::new(self.index_to_value(247), 19),
-                Indeterminate::new(self.index_to_value(242), 18),
-                Indeterminate::new(self.index_to_value(93), 17),
-                Indeterminate::new(self.index_to_value(230), 16),
-                Indeterminate::new(self.index_to_value(14), 15),
-                Indeterminate::new(self.index_to_value(109), 14),
-                Indeterminate::new(self.index_to_value(221), 13),
-                Indeterminate::new(self.index_to_value(53), 12),
-                Indeterminate::new(self.index_to_value(200), 11),
-                Indeterminate::new(self.index_to_value(74), 10),
-                Indeterminate::new(self.index_to_value(8), 9),
-                Indeterminate::new(self.index_to_value(172), 8),
-                Indeterminate::new(self.index_to_value(98), 7),
-                Indeterminate::new(self.index_to_value(80), 6),
-                Indeterminate::new(self.index_to_value(219), 5),
-                Indeterminate::new(self.index_to_value(134), 4),
-                Indeterminate::new(self.index_to_value(160), 3),
-                Indeterminate::new(self.index_to_value(105), 2),
-                Indeterminate::new(self.index_to_value(165), 1),
-                Indeterminate::new(self.index_to_value(231), 0),
-            ])),
+            2 => Some(Self::generate_corr_polynomial(self, vec![1, 25, 1])),
+            5 => Some(Self::generate_corr_polynomial(
+                self,
+                vec![1, 113, 164, 166, 119, 10],
+            )),
+            7 => Some(Self::generate_corr_polynomial(
+                self,
+                vec![1, 87, 229, 146, 149, 238, 102, 21],
+            )),
+            8 => Some(Self::generate_corr_polynomial(
+                self,
+                vec![1, 175, 238, 208, 249, 215, 252, 196, 28],
+            )),
+            10 => Some(Self::generate_corr_polynomial(
+                self,
+                vec![1, 251, 67, 46, 61, 118, 70, 64, 94, 32, 45],
+            )),
+            13 => Some(Self::generate_corr_polynomial(
+                self,
+                vec![
+                    1, 74, 152, 176, 100, 86, 100, 106, 104, 130, 218, 206, 140, 78,
+                ],
+            )),
+            14 => Some(Self::generate_corr_polynomial(
+                self,
+                vec![
+                    1, 199, 249, 155, 48, 190, 124, 218, 137, 216, 87, 207, 59, 22, 91,
+                ],
+            )),
+            16 => Some(Self::generate_corr_polynomial(
+                self,
+                vec![
+                    1, 120, 104, 107, 109, 102, 161, 76, 3, 91, 191, 147, 169, 182, 194, 225, 120,
+                ],
+            )),
+            17 => Some(Self::generate_corr_polynomial(
+                self,
+                vec![
+                    1, 43, 139, 206, 78, 43, 239, 123, 206, 214, 147, 24, 99, 150, 39, 243, 163,
+                    136,
+                ],
+            )),
+            18 => Some(Self::generate_corr_polynomial(
+                self,
+                vec![
+                    1, 215, 234, 158, 94, 184, 97, 118, 170, 79, 187, 152, 148, 252, 179, 5, 98,
+                    96, 153,
+                ],
+            )),
+            20 => Some(Self::generate_corr_polynomial(
+                self,
+                vec![
+                    1, 17, 60, 79, 50, 61, 163, 26, 187, 202, 180, 221, 225, 83, 239, 156, 164,
+                    212, 212, 188, 190,
+                ],
+            )),
+            22 => Some(Self::generate_corr_polynomial(
+                self,
+                vec![
+                    1, 210, 171, 247, 242, 93, 230, 14, 109, 221, 53, 200, 74, 8, 172, 98, 80, 219,
+                    134, 160, 105, 165, 231,
+                ],
+            )),
             _ => None,
         }
     }

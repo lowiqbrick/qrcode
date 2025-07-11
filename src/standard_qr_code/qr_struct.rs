@@ -141,7 +141,7 @@ impl MyBitVector {
                 6 => (value & 0b0100_0000) >> 6,
                 7 => (value & 0b1000_0000) >> 7,
                 _ => {
-                    panic!("tried to read bit {} of an u8", current_bit_read);
+                    panic!("tried to read bit {current_bit_read} of an u8");
                 }
             };
             // update for next loop
@@ -162,7 +162,7 @@ impl MyBitVector {
                 5 => self.data[byte_index as usize] |= current_bit << 5,
                 6 => self.data[byte_index as usize] |= current_bit << 6,
                 7 => self.data[byte_index as usize] |= current_bit << 7,
-                _ => panic!("attempted to write to bit {} in u8", current_bit_write),
+                _ => panic!("attempted to write to bit {current_bit_write} in u8"),
             }
             // update the byte index
             self.curr_position += 1;
@@ -432,7 +432,7 @@ impl QRData {
             match get_verison_info(input.information.len(), input.error_level) {
                 Ok(result) => result,
                 Err(msg) => {
-                    eprintln!("{}", msg);
+                    eprintln!("{msg}");
                     panic!()
                 }
             };
@@ -488,7 +488,7 @@ impl QRData {
     pub fn quiet_zone(&mut self) {
         if self.get_settings().debugging {
             println!("default initialisation of the data");
-            print!("{}", self);
+            print!("{self}");
         }
         let width: usize = self.output_data.len();
         for x in 0..width {
@@ -501,7 +501,7 @@ impl QRData {
         }
         if self.get_settings().debugging {
             println!("drew quiet zone");
-            print!("{}", self);
+            print!("{self}");
         }
     }
 
@@ -613,7 +613,7 @@ impl QRData {
         }
         if self.get_settings().debugging {
             println!("drew finding patterns");
-            print!("{}", self);
+            print!("{self}");
         }
     }
 
@@ -643,7 +643,7 @@ impl QRData {
         }
         if self.get_settings().debugging {
             println!("drew separators");
-            print!("{}", self);
+            print!("{self}");
         }
     }
 
@@ -673,7 +673,7 @@ impl QRData {
         }
         if self.get_settings().debugging {
             println!("drew timing patterns");
-            print!("{}", self);
+            print!("{self}");
         }
     }
 
@@ -713,7 +713,7 @@ impl QRData {
         }
         if self.get_settings().debugging {
             println!("after reserving place for format information");
-            print!("{}", self);
+            print!("{self}");
         }
     }
 
@@ -774,7 +774,7 @@ impl QRData {
             let lower_end: u8 = alignment_information.1[0];
             let upper_end: u8 = alignment_information.1[alignment_information.1.len() - 1];
             if self.settings.debugging {
-                println!("alignment lower: {} upper: {}", lower_end, upper_end);
+                println!("alignment lower: {lower_end} upper: {upper_end}");
             }
             // go over all qr code elements
             for x in 0..width {
@@ -803,7 +803,7 @@ impl QRData {
         }
         if self.get_settings().debugging {
             println!("after drawing alignment patterns");
-            print!("{}", self);
+            print!("{self}");
         }
     }
 
@@ -834,7 +834,7 @@ impl QRData {
         }
         if self.get_settings().debugging {
             println!("after reserving version information");
-            print!("{}", self);
+            print!("{self}");
         }
     }
 
@@ -842,7 +842,7 @@ impl QRData {
     fn generate_error_blocks(&self) -> (Vec<ErrorBlockInfo>, Vec<Vec<u8>>, usize, usize) {
         let error_blocks: Vec<ErrorBlockInfo> = self.error_blocks.clone();
         if self.settings.debugging {
-            println!("error blocks: {:?}", error_blocks);
+            println!("error blocks: {error_blocks:?}");
         }
         // create vector to contain the errorblock data
         let mut all_blocks: Vec<Vec<u8>> = vec![];
@@ -888,7 +888,7 @@ impl QRData {
                 vector.print_hex();
             }
             for vector in bit_vectors.iter() {
-                println!("{}", vector);
+                println!("{vector}");
             }
         }
         // write mode bits into data
@@ -922,7 +922,7 @@ impl QRData {
                 bit_vectors[bit_vector_index]
                     .push(char as u8 & 0b0000_1111, remaining_capacity as u8);
             } else {
-                panic!("remaining capacity wasn't 4, but {}", remaining_capacity);
+                panic!("remaining capacity wasn't 4, but {remaining_capacity}");
             }
         }
         if self.settings.debugging {
@@ -935,7 +935,7 @@ impl QRData {
                 vector.print_hex();
             }
             for vector in bit_vectors.iter() {
-                println!("{}", vector);
+                println!("{vector}");
             }
         }
         // pad a bit vector if it has bytes that are unused
@@ -980,7 +980,7 @@ impl QRData {
                 panic!("correction polynomial wasn't found")
             };
             if self.settings.debugging {
-                println!("error correction polynomial: {}", generator_polynomial);
+                println!("error correction polynomial: {generator_polynomial}");
             }
             // process individual blocks
             for _ in 0..block.num_block {
@@ -996,10 +996,7 @@ impl QRData {
                         vector_index,
                         Polynomial::from(bit_vectors[vector_index as usize].get_data())
                     );
-                    println!(
-                        "raw polynomial (block {}): {}",
-                        vector_index, raw_polynomial
-                    );
+                    println!("raw polynomial (block {vector_index}): {raw_polynomial}");
                 }
                 // attach missing 0x^n
                 let high_degree = raw_polynomial.get_function()[0].get_degree();
@@ -1032,7 +1029,7 @@ impl QRData {
         if self.settings.debugging {
             println!("all values:");
             for data_printout in all_blocks.iter() {
-                println!("{:?}", data_printout);
+                println!("{data_printout:?}");
             }
         }
     }
@@ -1143,7 +1140,7 @@ impl QRData {
                 final_data_vect.len()
             );
             for element in final_data_vect.iter() {
-                print!("{:02x} ", element)
+                print!("{element:02x} ")
             }
             println!();
         }
@@ -1157,10 +1154,7 @@ impl QRData {
         let mut x_index: usize = self.output_data.len() - 1 - 4;
         let mut y_index: usize = self.output_data.len() - 1 - 4;
         if self.settings.debugging {
-            println!(
-                "starting indices for writing\nx: {}\ny: {}",
-                x_index, y_index
-            );
+            println!("starting indices for writing\nx: {x_index}\ny: {y_index}");
         }
         let mut is_y_shrinking: bool = true;
         let mut is_right: bool = true;
@@ -1280,7 +1274,7 @@ impl QRData {
 
         if self.get_settings().debugging {
             println!("after writing the actual data");
-            print!("{}", self);
+            print!("{self}");
         }
     }
 
@@ -1307,8 +1301,8 @@ impl QRData {
                         self.output_data[x_index_left][y_index_left] = SymbolStatus::LogicalFalse;
                     }
                 } else {
-                    println!("{}", self);
-                    panic!("tried to write into field that isn't reserved for version information (x: {}, y: {})", x_index_left, y_index_left);
+                    println!("{self}");
+                    panic!("tried to write into field that isn't reserved for version information (x: {x_index_left}, y: {y_index_left})" );
                 }
                 self.role_data[x_index_left][y_index_left] = SymbolRole::VersionInformation;
 
@@ -1343,8 +1337,8 @@ impl QRData {
                         self.output_data[x_index_right][y_index_right] = SymbolStatus::LogicalFalse;
                     }
                 } else {
-                    println!("{}", self);
-                    panic!("tried to write into field that isn't reserved for version information (x: {}, y: {})", x_index_right, y_index_right);
+                    println!("{self}");
+                    panic!("tried to write into field that isn't reserved for version information (x: {x_index_right}, y: {y_index_right})" );
                 }
                 self.role_data[x_index_right][y_index_right] = SymbolRole::VersionInformation;
 
@@ -1365,7 +1359,7 @@ impl QRData {
         }
         if self.get_settings().debugging {
             println!("after writing the version information");
-            print!("{}", self);
+            print!("{self}");
         }
     }
 
@@ -1644,7 +1638,7 @@ impl QRData {
         write_format_info!(self, smallest_index, biggest_index, final_data_bits);
         if self.get_settings().debugging {
             println!("after applying the mask and format information");
-            print!("{}", self);
+            print!("{self}");
             // additional info
             println!(
                 "version: {}\nwidth: {}\ntext length: {}\nerror blocks:",
@@ -1653,7 +1647,7 @@ impl QRData {
                 self.get_settings().information.len()
             );
             for error_block in self.get_error_info() {
-                println!("    {:?}", error_block);
+                println!("    {error_block:?}");
             }
         }
     }
@@ -1662,9 +1656,9 @@ impl QRData {
 impl Display for QRData {
     fn fmt(&self, f: &mut Formatter) -> Result {
         if self.settings.debugging {
-            writeln!(f, "{}Uninitialised{}", BRIGHTMAGENTA, COLORSTOP)?;
-            writeln!(f, "{}LogicalTrue{}", BLACK, COLORSTOP)?;
-            writeln!(f, "{}LogicalFalse{}", BRIGHTWHITE, COLORSTOP)?;
+            writeln!(f, "{BRIGHTMAGENTA}Uninitialised{COLORSTOP}")?;
+            writeln!(f, "{BLACK}LogicalTrue{COLORSTOP}")?;
+            writeln!(f, "{BRIGHTWHITE}LogicalFalse{COLORSTOP}")?;
         }
         // put every data element in formatter
         for row in 0..self.output_data.len() {
@@ -1672,12 +1666,12 @@ impl Display for QRData {
                 match self.output_data[column][row] {
                     // color output utilising with ANSI
                     // 105 => bright magenta
-                    SymbolStatus::Uninitialised => write!(f, "{}   {}", BRIGHTMAGENTA, COLORSTOP)?,
+                    SymbolStatus::Uninitialised => write!(f, "{BRIGHTMAGENTA}   {COLORSTOP}")?,
 
                     // 40 => Black
-                    SymbolStatus::LogicalTrue => write!(f, "{}   {}", BLACK, COLORSTOP)?,
+                    SymbolStatus::LogicalTrue => write!(f, "{BLACK}   {COLORSTOP}")?,
                     // 107 => Bright White
-                    SymbolStatus::LogicalFalse => write!(f, "{}   {}", BRIGHTWHITE, COLORSTOP)?,
+                    SymbolStatus::LogicalFalse => write!(f, "{BRIGHTWHITE}   {COLORSTOP}")?,
                 }
             }
             // don't forget the newlines
@@ -1685,46 +1679,38 @@ impl Display for QRData {
         }
         // if debugging print the role data as well
         if self.settings.debugging {
-            writeln!(f, "{}Uninitialised{}", BRIGHTMAGENTA, COLORSTOP)?;
-            writeln!(f, "{}QuietZone{}", BRIGHTWHITE, COLORSTOP)?;
-            writeln!(f, "{}FinderPattern{}", WHITE, COLORSTOP)?;
-            writeln!(f, "{}AlignmentPattern{}", BRIGHTBLACK, COLORSTOP)?;
-            writeln!(f, "{}TimingPattern{}", BRIGHTRED, COLORSTOP)?;
-            writeln!(f, "{}Separator{}", RED, COLORSTOP)?;
-            writeln!(f, "{}ReservedFormatInformation{}", MAGENTA, COLORSTOP)?;
-            writeln!(f, "{}FormatInformation{}", BRIGHTYELLOW, COLORSTOP)?;
-            writeln!(f, "{}ReservedVersionInformation{}", BLUE, COLORSTOP)?;
-            writeln!(f, "{}VersionInformation{}", BRIGHTCYAN, COLORSTOP)?;
-            writeln!(f, "{}EncodingRegion{}", BRIGHTBLUE, COLORSTOP)?;
-            writeln!(f, "{}AlwaysTrue{}", BLACK, COLORSTOP)?;
+            writeln!(f, "{BRIGHTMAGENTA}Uninitialised{COLORSTOP}")?;
+            writeln!(f, "{BRIGHTWHITE}QuietZone{COLORSTOP}")?;
+            writeln!(f, "{WHITE}FinderPattern{COLORSTOP}")?;
+            writeln!(f, "{BRIGHTBLACK}AlignmentPattern{COLORSTOP}")?;
+            writeln!(f, "{BRIGHTRED}TimingPattern{COLORSTOP}")?;
+            writeln!(f, "{RED}Separator{COLORSTOP}")?;
+            writeln!(f, "{MAGENTA}ReservedFormatInformation{COLORSTOP}")?;
+            writeln!(f, "{BRIGHTYELLOW}FormatInformation{COLORSTOP}")?;
+            writeln!(f, "{BLUE}ReservedVersionInformation{COLORSTOP}")?;
+            writeln!(f, "{BRIGHTCYAN}VersionInformation{COLORSTOP}")?;
+            writeln!(f, "{BRIGHTBLUE}EncodingRegion{COLORSTOP}")?;
+            writeln!(f, "{BLACK}AlwaysTrue{COLORSTOP}")?;
             for row in 0..self.role_data.len() {
                 for column in 0..self.role_data[row].len() {
                     match self.role_data[column][row] {
                         // for now all magenta; rest to be implemented
-                        SymbolRole::Uninitialised => {
-                            write!(f, "{}   {}", BRIGHTMAGENTA, COLORSTOP)?
-                        }
-                        SymbolRole::QuietZone => write!(f, "{}   {}", BRIGHTWHITE, COLORSTOP)?,
-                        SymbolRole::FinderPattern => write!(f, "{}   {}", WHITE, COLORSTOP)?,
-                        SymbolRole::AlignmentPattern => {
-                            write!(f, "{}   {}", BRIGHTBLACK, COLORSTOP)?
-                        }
-                        SymbolRole::TimingPattern => write!(f, "{}   {}", BRIGHTRED, COLORSTOP)?,
-                        SymbolRole::Separator => write!(f, "{}   {}", RED, COLORSTOP)?,
+                        SymbolRole::Uninitialised => write!(f, "{BRIGHTMAGENTA}   {COLORSTOP}")?,
+                        SymbolRole::QuietZone => write!(f, "{BRIGHTWHITE}   {COLORSTOP}")?,
+                        SymbolRole::FinderPattern => write!(f, "{WHITE}   {COLORSTOP}")?,
+                        SymbolRole::AlignmentPattern => write!(f, "{BRIGHTBLACK}   {COLORSTOP}")?,
+                        SymbolRole::TimingPattern => write!(f, "{BRIGHTRED}   {COLORSTOP}")?,
+                        SymbolRole::Separator => write!(f, "{RED}   {COLORSTOP}")?,
                         SymbolRole::ReservedFormatInformation => {
-                            write!(f, "{}   {}", MAGENTA, COLORSTOP)?
+                            write!(f, "{MAGENTA}   {COLORSTOP}")?
                         }
-                        SymbolRole::FormatInformation => {
-                            write!(f, "{}   {}", BRIGHTYELLOW, COLORSTOP)?
-                        }
+                        SymbolRole::FormatInformation => write!(f, "{BRIGHTYELLOW}   {COLORSTOP}")?,
                         SymbolRole::ReservedVersionInformation => {
-                            write!(f, "{}   {}", BLUE, COLORSTOP)?
+                            write!(f, "{BLUE}   {COLORSTOP}")?
                         }
-                        SymbolRole::VersionInformation => {
-                            write!(f, "{}   {}", BRIGHTCYAN, COLORSTOP)?
-                        }
-                        SymbolRole::EncodingRegion => write!(f, "{}   {}", BRIGHTBLUE, COLORSTOP)?,
-                        SymbolRole::AlwaysTrue => write!(f, "{}   {}", BLACK, COLORSTOP)?,
+                        SymbolRole::VersionInformation => write!(f, "{BRIGHTCYAN}   {COLORSTOP}")?,
+                        SymbolRole::EncodingRegion => write!(f, "{BRIGHTBLUE}   {COLORSTOP}")?,
+                        SymbolRole::AlwaysTrue => write!(f, "{BLACK}   {COLORSTOP}")?,
                     }
                 }
                 // don't forget the newlines
@@ -1759,7 +1745,7 @@ mod tests {
         test_vector.push(0b01010101, 8);
         test_vector.pad_empty_rest();
         for byte in test_vector.data.clone() {
-            print!("{:#x} ", byte);
+            print!("{byte:#x} ");
         }
         assert_eq!(
             test_vector.data,

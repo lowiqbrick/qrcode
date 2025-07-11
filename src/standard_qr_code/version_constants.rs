@@ -1225,7 +1225,7 @@ pub fn alignment_pattern_data(version: u8) -> (u8, Vec<u8>) {
         39 => (46, vec![6, 26, 54, 82, 110, 138, 166]),
         40 => (46, vec![6, 30, 58, 86, 114, 142, 170]),
         _ => {
-            eprintln!("version number {}", version);
+            eprintln!("version number {version}");
             panic!();
         }
     }
@@ -1268,7 +1268,7 @@ pub fn version_info(version: u8) -> u32 {
         38 => 0x26A64,
         39 => 0x27541,
         40 => 0x28C69,
-        _ => panic!("invlaid version handed to version information {}", version),
+        _ => panic!("invlaid version handed to version information {version}"),
     }
 }
 
@@ -1307,10 +1307,7 @@ pub fn information_sequences(data: u8) -> u16 {
         29 => 0x2183,
         30 => 0x2EDA,
         31 => 0x2BED,
-        _ => panic!(
-            "an invalid value given for information bit sequences {}",
-            data
-        ),
+        _ => panic!("an invalid value given for information bit sequences {data}"),
     }
 }
 
@@ -1365,7 +1362,7 @@ fn sanitycheck_version_information() {
 // there sould be spaced out equally from one another
 fn sanity_check_alignment_pattern() {
     for version in 1..=40 {
-        eprintln!("version: {}", version);
+        eprintln!("version: {version}");
         let version_data: (u8, Vec<u8>) = alignment_pattern_data(version);
         if version_data.1.len() >= 3 {
             if version_data.1.len() == 3 {

@@ -7,7 +7,7 @@ use crate::standard_qr_code::qr_struct::QRData;
 pub fn qr_code(input: Settings) {
     // all text is assumed to be encoded in byte mode
     if input.debugging {
-        println!("{:?}", input);
+        println!("{input:?}");
     }
     // struct for all data
     let mut qrdata: QRData = QRData::new(input);

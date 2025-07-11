@@ -60,7 +60,7 @@ impl GaloisFields {
             if let Some(existing_value) =
                 res_map.insert(index, GaloisFields::_to_galois_u8(x.clone()))
             {
-                eprintln!("overwrote exisitng entry {:?} in hasmap", existing_value);
+                eprintln!("overwrote exisitng entry {existing_value:?} in hasmap");
             }
             // don't if this is the last iteration
             if index != m {
@@ -79,7 +79,7 @@ impl GaloisFields {
             if let Some(existing_value) =
                 res_map.insert(index, GaloisFields::_to_galois_u8(x.clone()))
             {
-                eprintln!("overwrote exisitng entry {:?} in hasmap", existing_value);
+                eprintln!("overwrote exisitng entry {existing_value:?} in hasmap");
             }
         }
 
@@ -110,7 +110,7 @@ impl GaloisFields {
                 return Ok(index - 1);
             }
         }
-        Err(format!("value {} not found", value))
+        Err(format!("value {value} not found"))
     }
 
     /// meant to be used on a galosi field of m=8 and Polynomial x^4+x^3+x^2+1
@@ -204,27 +204,27 @@ impl GaloisFields {
             //     "index of the highest value in the data is {}",
             //     highest_value_index
             // );
-            for (_index, element) in work_data_bytes.get_function_mut().iter_mut().enumerate() {
+            for element in work_data_bytes.get_function_mut().iter_mut() {
                 if offset == 0 && working_iterations != 0 {
                     // get alpha indices from correction and highest value
-                    let mut value_correction_value = None;
+                    let mut value_correction_value_option = None;
                     for correction_element in correction_polynomial.clone() {
                         if correction_element.get_degree()
                             == (working_iterations - 1).try_into().unwrap()
                         {
-                            value_correction_value = Some(correction_element.get_coefficient());
+                            value_correction_value_option =
+                                Some(correction_element.get_coefficient());
                         }
                     }
-                    let value_correction_index = if value_correction_value.is_some() {
-                        galois_field
-                            .value_to_index(value_correction_value.unwrap())
-                            .unwrap()
-                    } else {
-                        panic!(
-                            "no index for value {} in galois field",
-                            value_correction_value.unwrap()
-                        );
-                    };
+                    let value_correction_index =
+                        if let Some(value_correction_value) = value_correction_value_option {
+                            galois_field.value_to_index(value_correction_value).unwrap()
+                        } else {
+                            panic!(
+                                "no index for value {} in galois field",
+                                value_correction_value_option.unwrap()
+                            );
+                        };
                     // println!("--------------\ndata byte at index {}", _index);
                     // add indices
                     let new_alpha_index =
@@ -249,9 +249,7 @@ impl GaloisFields {
                 if working_iterations != 0 && offset == 0 {
                     working_iterations -= 1;
                 }
-                if offset != 0 {
-                    offset -= 1;
-                }
+                offset = offset.saturating_sub(1);
             }
             // println!("after iteration {}: {}", iteration_index, work_data_bytes);
         }
@@ -276,7 +274,7 @@ impl Display for GaloisFields {
         keys.sort();
         for (index, key) in keys.iter().enumerate() {
             // index
-            write!(f, "{:>8}   ", key)?;
+            write!(f, "{key:>8}   ")?;
             // alpha index
             if index == 0 {
                 write!(f, "  nan   ")?;
@@ -428,9 +426,6 @@ fn test_calculate_error_correction() {
         Indeterminate::new(44, 1),
         Indeterminate::new(85, 0),
     ]);
-    println!(
-        "results\ncalculated: {}\nexpected:   {}",
-        result, expected_result
-    );
+    println!("results\ncalculated: {result}\nexpected:   {expected_result}");
     assert_eq!(result, expected_result);
 }

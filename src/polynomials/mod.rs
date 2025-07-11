@@ -315,7 +315,7 @@ mod tests {
         let inde1: Indeterminate = Indeterminate::new(3, 2);
         let inde2: Indeterminate = Indeterminate::new(5, 6);
         let result2: Indeterminate = inde1 * inde2;
-        println!("{} multiplied with {} equals {} ", inde1, inde2, result2);
+        println!("{inde1} multiplied with {inde2} equals {result2} ");
         assert_eq!(result2, Indeterminate::new(15, 8));
     }
 
@@ -361,7 +361,7 @@ mod tests {
             Polynomial::new(vec![Indeterminate::new(4, 3), Indeterminate::new(2, 2)]);
         let add2: Polynomial = Polynomial::new(vec![Indeterminate::new(65, 3)]);
         let result_add: Polynomial = add1.clone() + add2.clone();
-        println!("{} plus {} equals {}", add1, add2, result_add);
+        println!("{add1} plus {add2} equals {result_add}");
         assert_eq!(
             result_add,
             Polynomial::new(vec![Indeterminate::new(69, 3), Indeterminate::new(2, 2)])
@@ -380,7 +380,7 @@ mod tests {
         let mul2: Polynomial =
             Polynomial::new(vec![Indeterminate::new(1, 1), Indeterminate::new(1, 0)]);
         let result: Polynomial = mul1.clone() * mul2.clone();
-        println!("{} multiplied by {} equals {}", mul1, mul2, result);
+        println!("{mul1} multiplied by {mul2} equals {result}");
         assert_eq!(
             result,
             Polynomial::new(vec![

@@ -6,4 +6,4 @@ This code was written to understand the mathematics and theory behind QR-Code. A
 
 If you want to give it a shot run `cargo run -- "Hello, world! 123" m` (and yell at me in case it doesn't work).
 
-In Order to make it workable for all possible input texts and configurations the `correction_polynomial()`-function in the galois fields must be completed (which is a lot of writing busywork). Additionaly tests should be performed to test the writing of the version information and the shuffling of individual bytes in case there are multiple datablocks within a QR-Code.
+In Order to make it workable for all possible input texts and configurations the `correction_polynomial()`-function in the galois fields must be completed (which is a lot of writing busywork).

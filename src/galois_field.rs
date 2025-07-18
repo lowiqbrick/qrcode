@@ -14,6 +14,17 @@ pub struct GaloisFields {
     galois_table: HashMap<u8, u8>,
 }
 
+/// macro for checking the length of the given vector in a test
+macro_rules! generator_macro {
+    ($vect_len:expr, $galois_field:expr, $vector_coeff:expr) => {{
+        assert_eq!($vector_coeff.len(), $vect_len + 1);
+        Some(GaloisFields::generate_corr_polynomial(
+            $galois_field,
+            $vector_coeff,
+        ))
+    }};
+}
+
 impl GaloisFields {
     /// converts a polynomila into it's obinary representation
     /// x^4+x^3+x^2+1 => 0b00011101
@@ -140,104 +151,100 @@ impl GaloisFields {
     /// meant to be used on a galosi field of m=8 and Polynomial x^4+x^3+x^2+1
     pub fn correction_polynomial(&self, num_error_corr: u8) -> Option<Polynomial> {
         match num_error_corr {
-            2 => Some(Self::generate_corr_polynomial(self, vec![1, 25, 1])),
-            5 => Some(Self::generate_corr_polynomial(
+            2 => generator_macro!(2, self, vec![1, 25, 1]),
+            5 => generator_macro!(5, self, vec![1, 113, 164, 166, 119, 10]),
+            7 => generator_macro!(7, self, vec![1, 87, 229, 146, 149, 238, 102, 21]),
+            8 => generator_macro!(8, self, vec![1, 175, 238, 208, 249, 215, 252, 196, 28]),
+            10 => generator_macro!(10, self, vec![1, 251, 67, 46, 61, 118, 70, 64, 94, 32, 45]),
+            13 => generator_macro!(
+                13,
                 self,
-                vec![1, 113, 164, 166, 119, 10],
-            )),
-            7 => Some(Self::generate_corr_polynomial(
+                vec![1, 74, 152, 176, 100, 86, 100, 106, 104, 130, 218, 206, 140, 78,]
+            ),
+            14 => generator_macro!(
+                14,
                 self,
-                vec![1, 87, 229, 146, 149, 238, 102, 21],
-            )),
-            8 => Some(Self::generate_corr_polynomial(
-                self,
-                vec![1, 175, 238, 208, 249, 215, 252, 196, 28],
-            )),
-            10 => Some(Self::generate_corr_polynomial(
-                self,
-                vec![1, 251, 67, 46, 61, 118, 70, 64, 94, 32, 45],
-            )),
-            13 => Some(Self::generate_corr_polynomial(
-                self,
-                vec![
-                    1, 74, 152, 176, 100, 86, 100, 106, 104, 130, 218, 206, 140, 78,
-                ],
-            )),
-            14 => Some(Self::generate_corr_polynomial(
-                self,
-                vec![
-                    1, 199, 249, 155, 48, 190, 124, 218, 137, 216, 87, 207, 59, 22, 91,
-                ],
-            )),
-            16 => Some(Self::generate_corr_polynomial(
+                vec![1, 199, 249, 155, 48, 190, 124, 218, 137, 216, 87, 207, 59, 22, 91,]
+            ),
+            16 => generator_macro!(
+                16,
                 self,
                 vec![
                     1, 120, 104, 107, 109, 102, 161, 76, 3, 91, 191, 147, 169, 182, 194, 225, 120,
-                ],
-            )),
-            17 => Some(Self::generate_corr_polynomial(
+                ]
+            ),
+            17 => generator_macro!(
+                17,
                 self,
                 vec![
                     1, 43, 139, 206, 78, 43, 239, 123, 206, 214, 147, 24, 99, 150, 39, 243, 163,
                     136,
-                ],
-            )),
-            18 => Some(Self::generate_corr_polynomial(
+                ]
+            ),
+            18 => generator_macro!(
+                18,
                 self,
                 vec![
                     1, 215, 234, 158, 94, 184, 97, 118, 170, 79, 187, 152, 148, 252, 179, 5, 98,
                     96, 153,
-                ],
-            )),
-            20 => Some(Self::generate_corr_polynomial(
+                ]
+            ),
+            20 => generator_macro!(
+                20,
                 self,
                 vec![
                     1, 17, 60, 79, 50, 61, 163, 26, 187, 202, 180, 221, 225, 83, 239, 156, 164,
                     212, 212, 188, 190,
-                ],
-            )),
-            22 => Some(Self::generate_corr_polynomial(
+                ]
+            ),
+            22 => generator_macro!(
+                22,
                 self,
                 vec![
                     1, 210, 171, 247, 242, 93, 230, 14, 109, 221, 53, 200, 74, 8, 172, 98, 80, 219,
                     134, 160, 105, 165, 231,
-                ],
-            )),
-            24 => Some(Self::generate_corr_polynomial(
+                ]
+            ),
+            24 => generator_macro!(
+                24,
                 self,
                 vec![
                     1, 229, 121, 135, 48, 211, 117, 251, 126, 159, 180, 169, 152, 192, 226, 228,
                     218, 111, 0, 117, 232, 87, 96, 227, 21,
-                ],
-            )),
-            26 => Some(Self::generate_corr_polynomial(
+                ]
+            ),
+            26 => generator_macro!(
+                26,
                 self,
                 vec![
                     1, 173, 125, 158, 2, 103, 182, 118, 17, 145, 201, 111, 28, 165, 53, 161, 21,
                     245, 142, 13, 102, 48, 227, 153, 145, 218, 70,
-                ],
-            )),
-            28 => Some(Self::generate_corr_polynomial(
+                ]
+            ),
+            28 => generator_macro!(
+                28,
                 self,
                 vec![
                     1, 168, 223, 200, 104, 224, 234, 108, 180, 110, 190, 195, 147, 205, 27, 232,
                     201, 21, 43, 245, 87, 42, 195, 212, 119, 242, 37, 9, 123,
-                ],
-            )),
-            30 => Some(Self::generate_corr_polynomial(
+                ]
+            ),
+            30 => generator_macro!(
+                30,
                 self,
                 vec![
                     1, 41, 173, 145, 152, 216, 31, 179, 182, 50, 48, 110, 86, 239, 96, 222, 125,
                     42, 173, 226, 193, 224, 130, 156, 37, 251, 216, 238, 40, 192, 180,
-                ],
-            )),
-            32 => Some(Self::generate_corr_polynomial(
+                ]
+            ),
+            32 => generator_macro!(
+                32,
                 self,
                 vec![
                     1, 10, 6, 106, 190, 249, 167, 4, 67, 209, 138, 138, 32, 242, 123, 89, 27, 120,
                     185, 80, 156, 38, 69, 171, 60, 28, 222, 80, 52, 254, 185, 220, 241,
-                ],
-            )),
+                ]
+            ),
             _ => None,
         }
     }
@@ -508,4 +515,24 @@ fn test_calculate_error_correction() {
     ]);
     println!("results\ncalculated: {result}\nexpected:   {expected_result}");
     assert_eq!(result, expected_result);
+}
+
+#[test]
+fn test_len_correction_polynomial() {
+    // longest error correction polynomial
+    let max_correction = 68;
+    let galois_field = GaloisFields::_new(
+        8,
+        Polynomial::new(vec![
+            Indeterminate::new(1, 4),
+            Indeterminate::new(1, 3),
+            Indeterminate::new(1, 2),
+            Indeterminate::new(1, 0),
+        ]),
+    );
+
+    // results can be ignored if a vector has the worng size the test fails
+    for corr_index in 0..=max_correction {
+        _ = galois_field.correction_polynomial(corr_index);
+    }
 }

@@ -1018,17 +1018,16 @@ impl QRData {
                     galois_field.clone(),
                 );
                 // put data and error correction together
-                let mut final_polynomial = raw_polynomial + error_polynomial;
-                final_polynomial.reduce();
+                let final_polynomial = raw_polynomial + error_polynomial;
                 // write results into final vector
                 for values in final_polynomial.into_iter() {
                     all_blocks[vector_index as usize].push(values.get_coefficient());
                 }
                 vector_index += 1;
             }
-            if self.settings.debugging {
-                println!("Galois Field: {galois_field}");
-            }
+        }
+        if self.settings.debugging {
+            println!("Galois Field: {galois_field}");
         }
         if self.settings.debugging {
             println!("all values:");
@@ -1049,6 +1048,9 @@ impl QRData {
     ) -> Vec<u8> {
         if self.settings.debugging {
             println!("all blocks info: {all_blocks:x?}");
+            for vector in all_blocks.iter() {
+                println!("block len: {}", vector.len());
+            }
         }
         // write the data into one vector that contains all data to be written into the code
         // adhering to the construction of the final message codeword sequence
@@ -1106,13 +1108,24 @@ impl QRData {
                 for block_env in all_blocks.iter().enumerate() {
                     // is this the shorter block?
                     if block_env.0 < error_blocks[0].num_block.into() {
-                        let left_out_index = (error_blocks[0].num_data_bytes - 1) as usize;
+                        let left_out_index = (error_blocks[0].num_data_bytes) as usize;
                         // check for the index that is supposed to be left out
                         match vector_env.cmp(&left_out_index) {
                             // if index above the index to be left out a value wasn't written and
                             // the index must be artificialy lowered to account for the öeft out value
                             Ordering::Greater => {
-                                final_data_vect.push(all_blocks[block_env.0][vector_env - 1])
+                                if vector_env == 0 {
+                                    eprintln!("came in greater part with vector_env=0")
+                                } else if vector_env
+                                    < (error_blocks[0].num_data_bytes
+                                        + error_blocks[0].num_error_bytes)
+                                        as usize
+                                {
+                                    final_data_vect.push(all_blocks[block_env.0][vector_env - 1])
+                                // this triggers in the last index
+                                } else {
+                                    final_data_vect.push(all_blocks[block_env.0][vector_env - 2])
+                                }
                             }
                             // if at the index to be left out, do nothing
                             Ordering::Equal => (),
@@ -1140,6 +1153,7 @@ impl QRData {
                 final_data_vect.len(),
                 tot_num_codewords
             );
+            eprintln!("final data: {final_data_vect:x?}")
         }
         assert!(final_data_vect.len() == tot_num_codewords);
         if self.settings.debugging {

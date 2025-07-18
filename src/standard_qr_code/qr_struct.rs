@@ -3,6 +3,7 @@ use crate::input::ErrorLevel;
 use crate::polynomials::{Indeterminate, Polynomial};
 use crate::standard_qr_code::version_constants::{alignment_pattern_data, version_info};
 use crate::{standard_qr_code::utils::get_verison_info, Settings};
+use std::vec;
 use std::{
     cmp::Ordering,
     fmt::{Display, Formatter, Result},
@@ -1046,6 +1047,9 @@ impl QRData {
         tot_num_blocks: usize,
         tot_num_codewords: usize,
     ) -> Vec<u8> {
+        if self.settings.debugging {
+            println!("all blocks info: {all_blocks:x?}");
+        }
         // write the data into one vector that contains all data to be written into the code
         // adhering to the construction of the final message codeword sequence
         // Block 1      D1 | D2 | ..... D11|      E1 | E2 | ..... E22|
@@ -1090,33 +1094,35 @@ impl QRData {
                 }
             }
         } else if error_blocks.len() == 2 {
-            // if there are two error blocks than the first is shorter than the second
-            // and it's "nonexistend" data must not be written
-            let index_nonexistent: usize = (error_blocks[1].num_data_bytes - 1) as usize;
+            if self.settings.debugging {
+                println!("entered the shuffeling of the data bytes");
+            }
             // loop from beginning of vector to the end
-            // go full length over a vector
+            // go full length over the longer vector
             for vector_env in
                 0..(error_blocks[1].num_data_bytes + error_blocks[1].num_error_bytes) as usize
             {
                 // go over every vector at the current index
-                for block_env in all_blocks.iter().enumerate().take(tot_num_blocks) {
-                    // if inside the smaller vector
-                    if block_env.0 < (error_blocks[0].num_block - 1) as usize {
-                        // if past the nonexistent index decrement the read index
-                        match vector_env.cmp(&index_nonexistent) {
+                for block_env in all_blocks.iter().enumerate() {
+                    // is this the shorter block?
+                    if block_env.0 < error_blocks[0].num_block.into() {
+                        let left_out_index = (error_blocks[0].num_data_bytes - 1) as usize;
+                        // check for the index that is supposed to be left out
+                        match vector_env.cmp(&left_out_index) {
+                            // if index above the index to be left out a value wasn't written and
+                            // the index must be artificialy lowered to account for the öeft out value
                             Ordering::Greater => {
                                 final_data_vect.push(all_blocks[block_env.0][vector_env - 1])
                             }
+                            // if at the index to be left out, do nothing
+                            Ordering::Equal => (),
+                            // if below the index to be left out, write as usual
                             Ordering::Less => {
-                                // if before the nonexistent index don't mess with the index
-                                final_data_vect.push(all_blocks[block_env.0][vector_env]);
-                            }
-                            Ordering::Equal => {
-                                // if at exactly the nonexistent index do nothing
+                                final_data_vect.push(all_blocks[block_env.0][vector_env])
                             }
                         }
                     } else {
-                        // write values in finalvector
+                        // write data into vector
                         final_data_vect.push(all_blocks[block_env.0][vector_env]);
                     }
                 }
@@ -1138,7 +1144,7 @@ impl QRData {
         assert!(final_data_vect.len() == tot_num_codewords);
         if self.settings.debugging {
             println!(
-                "data in final vector: {:?} (length {})",
+                "data in final vector: {:x?} (length {})",
                 final_data_vect,
                 final_data_vect.len()
             );
@@ -1615,8 +1621,7 @@ impl QRData {
             }
             if self.settings.debugging {
                 print!(
-                    "mask {}:\n{}",
-                    mask_number,
+                    "mask {mask_number} (penalty: {current_loss}):\n{}",
                     self_blank.apply_mask(mask_number)
                 );
             }

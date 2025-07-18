@@ -118,10 +118,10 @@ impl GaloisFields {
         let mut polynomial = Polynomial::new(vec![]);
         let mut current_degree = coefficients_indices.len() - 1;
         for coefficient_index in coefficients_indices.iter() {
-            println!("index: {current_degree}");
-            println!("coefficient_index: {coefficient_index}");
+            // println!("index: {current_degree}");
+            // println!("coefficient_index: {coefficient_index}");
             let alpha_value = galois_field.index_to_value(*coefficient_index);
-            println!("value to index: {alpha_value}");
+            // println!("value to index: {alpha_value}");
             if current_degree == (coefficients_indices.len() - 1) {
                 polynomial.push(Indeterminate::new(1, current_degree.try_into().unwrap()));
             } else {
@@ -133,7 +133,7 @@ impl GaloisFields {
             current_degree = current_degree.saturating_sub(1);
         }
         assert!(current_degree == 0);
-        println!("poly: {polynomial}");
+        // println!("poly: {polynomial}");
         polynomial
     }
 
